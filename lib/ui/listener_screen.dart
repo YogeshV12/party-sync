@@ -133,6 +133,12 @@ class _StatusHero extends StatelessWidget {
           true
         ),
       SessionPhase.syncing => (Icons.timer_outlined, 'Syncing clocks…', 'Almost there.', true),
+      SessionPhase.live when engine.hostMuted => (
+          Icons.mic_off,
+          'Host is muted',
+          "You're connected. Sound resumes when they unmute.",
+          false
+        ),
       SessionPhase.live => (
           Icons.graphic_eq,
           'Playing',
@@ -243,8 +249,8 @@ class _Stats extends StatelessWidget {
         ),
         StatTile(
           label: 'Buffer ahead',
-          value: '${p.bufferedMs.round()} ms',
-          color: healthColor(scheme, bufferHealth(p.bufferedMs)),
+          value: engine.hostMuted ? '—' : '${p.bufferedMs.round()} ms',
+          color: engine.hostMuted ? null : healthColor(scheme, bufferHealth(p.bufferedMs)),
         ),
         StatTile(
           label: 'Packet loss',

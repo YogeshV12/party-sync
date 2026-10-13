@@ -122,12 +122,17 @@ class SessionEngine extends ChangeNotifier {
   Completer<bool>? _discovery;
   int _pingSeq = 0;
   int _lastRxUs = 0;
+  int _lastAudioRxUs = 0;
   int _lastAudioSeq = -1;
   int _windowReceived = 0;
   int _windowLost = 0;
   int _windowStartUs = 0;
   double lossPct = 0;
   int _windowPushed = 0;
+  int _tickPushed = 0;
+
+  /// Seconds in a row that audio arrived but the buffer stayed empty.
+  int starvingTicks = 0;
   int _windowPeak = 0;
   int _lastLeadUs = 0;
   PlaybackStats playback = PlaybackStats.empty;
@@ -149,16 +154,25 @@ class SessionEngine extends ChangeNotifier {
   int _generation = 0;
   bool _disposed = false;
 
+  /// Connected, but no audio is coming in: what a muted host looks like (a muted
+  /// host keeps answering clock pings, it just stops sending audio).
+  bool get hostMuted =>
+      phase == SessionPhase.live &&
+      nowUs() - _lastRxUs < 2500000 &&
+      nowUs() - _lastAudioRxUs > 1500000;
+
   int get childCount => _server?.children.length ?? 0;
   int get listenerCount => nodes.length - (nodes.containsKey(nodeId) ? 1 : 0);
   bool get canRelayHere => caps.canRelay && depth < maxDepth;
 
   /// Host sync delay (ms) this speaker needs, or null if it's keeping up. A
   /// Bluetooth speaker can take longer to play a chunk than the host's delay
-  /// gives it, so the chunk is always late and the buffer stays empty.
+  /// gives it, so the chunk is always late and the buffer stays empty even
+  /// though audio is arriving. A muted host also leaves the buffer empty.
   int? get neededSyncDelayMs {
-    if (phase != SessionPhase.live || playback.outputLatencyMs <= 0) return null;
-    if (playback.bufferedMs >= 40) return null;
+    // A few seconds, not one: the buffer is briefly empty when the host unmutes.
+    if (phase != SessionPhase.live || starvingTicks < 3) return null;
+    if (playback.outputLatencyMs <= 0 || playback.bufferedMs >= 40) return null;
     return ((playback.outputLatencyMs + 200) / 50).ceil() * 50;
   }
 
@@ -585,6 +599,7 @@ class SessionEngine extends ChangeNotifier {
     }
     sessionName = welcome.sessionName;
     _lastRxUs = d.rxUs;
+    if (_lastAudioRxUs == 0) _lastAudioRxUs = d.rxUs;
     phase = clock.isSynced ? SessionPhase.live : SessionPhase.syncing;
     notice = null;
     for (var i = 0; i < 6; i++) {
@@ -612,6 +627,7 @@ class SessionEngine extends ChangeNotifier {
     final packet = AudioPacket.decode(d.data);
     if (packet == null || packet.sessionId != sessionId) return;
     _lastRxUs = d.rxUs;
+    _lastAudioRxUs = d.rxUs;
     // Forward before decoding so children aren't delayed by our own work.
     if (relaying) _server?.broadcast(d.data);
     _trackLoss(packet.seq);
@@ -622,6 +638,7 @@ class SessionEngine extends ChangeNotifier {
         ? MuLaw.decode(packet.payload)
         : _pcm16(packet.payload);
     _windowPushed++;
+    _tickPushed++;
     _lastLeadUs = packet.playAtHostUs - offset - nowUs();
     for (final s in pcm) {
       if (s.abs() > _windowPeak) _windowPeak = s.abs();
@@ -677,6 +694,9 @@ class SessionEngine extends ChangeNotifier {
   void _sendPing() => _sendToParent(PingPacket(sessionId, _pingSeq++, nowUs()).encode());
 
   void _listenerTick() {
+    final starving = _tickPushed > 0 && playback.bufferedMs < 40;
+    starvingTicks = starving ? starvingTicks + 1 : 0;
+    _tickPushed = 0;
     _sendPing();
     final silentUs = nowUs() - _lastRxUs;
     if ((phase == SessionPhase.live || phase == SessionPhase.syncing) &&
@@ -934,6 +954,9 @@ class SessionEngine extends ChangeNotifier {
     parentName = '';
     _lastAudioSeq = -1;
     lossPct = 0;
+    starvingTicks = 0;
+    _tickPushed = 0;
+    _lastAudioRxUs = 0;
     depth = 0;
     path = const [];
   }

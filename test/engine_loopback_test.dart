@@ -233,6 +233,13 @@ void main() {
     await Future<void>.delayed(const Duration(seconds: 5));
     expect(leafAudio.pushes, isEmpty);
     expect(leaf.phase, SessionPhase.live, reason: 'pongs keep the link alive');
+    expect(leaf.hostMuted, isTrue, reason: 'live link but no audio');
+    host.setMuted(false);
+    for (var i = 10; i < 40; i++) {
+      hostAudio.emit(CaptureFrame(nowUs(), i * 320, Int16List(320)));
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    expect(leaf.hostMuted, isFalse, reason: 'audio is flowing again');
   }, timeout: const Timeout(Duration(seconds: 30)));
 
   test('a too-short Wi-Fi password fails with a clear error before joining', () async {
@@ -264,8 +271,12 @@ void main() {
   test('asks for a longer host delay when output latency exceeds the buffer', () {
     final leaf = makeEngine(FakeAudio(), FakeNet(), 47941, 'Leaf')
       ..phase = SessionPhase.live
+      ..starvingTicks = 3
       ..playback = const PlaybackStats(outputLatencyMs: 534, bufferedMs: 0);
     expect(leaf.neededSyncDelayMs, 750);
+    leaf.starvingTicks = 1; // e.g. just after the host unmutes
+    expect(leaf.neededSyncDelayMs, isNull);
+    leaf.starvingTicks = 3;
     leaf.playback = const PlaybackStats(outputLatencyMs: 60, bufferedMs: 250);
     expect(leaf.neededSyncDelayMs, isNull);
   });
