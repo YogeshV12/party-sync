@@ -51,7 +51,7 @@ class NetworkTree extends StatelessWidget {
               Icon(Icons.hourglass_empty, color: scheme.onSurfaceVariant),
               const SizedBox(width: 12),
               const Expanded(
-                child: Text('No speakers yet. Ask people to scan the QR code.'),
+                child: Text('No speakers yet. Have the squad scan your QR code to turn up!'),
               ),
             ],
           ),
@@ -84,11 +84,11 @@ class _NodeRow extends StatelessWidget {
           : Icons.speaker,
     };
     final details = <String>[
-      if (node.role == 'relay') 'Relay · ${node.children} connected',
+      if (node.role == 'relay') 'Booster 📡 · ${node.children} synced',
       if (node.route != null && node.route!.isNotEmpty) node.route!,
-      if (node.bufferMs != null) 'buffer ${node.bufferMs!.round()} ms',
+      if (node.bufferMs != null) '${node.bufferMs!.round()} ms buffer',
       if (node.lossPct != null && node.lossPct! >= 0.5)
-        'loss ${node.lossPct!.toStringAsFixed(1)}%',
+        '${node.lossPct!.toStringAsFixed(1)}% drops',
     ];
     final health = node.role == 'host'
         ? null
@@ -120,7 +120,7 @@ class _NodeRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  node.role == 'host' ? '${node.name} (you)' : node.name,
+                  node.role == 'host' ? '${node.name} (you 🎤)' : node.name,
                   style: const TextStyle(fontWeight: FontWeight.w600),
                   overflow: TextOverflow.ellipsis,
                 ),

@@ -47,7 +47,7 @@ class _JoinScreenState extends State<JoinScreen> {
     final host = _host.text.trim();
     if (ssid.isEmpty && host.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Enter the network name.')));
+          const SnackBar(content: Text('Please enter the Wi-Fi name.')));
       return;
     }
     _join(JoinInfo(
@@ -62,7 +62,7 @@ class _JoinScreenState extends State<JoinScreen> {
     final scheme = Theme.of(context).colorScheme;
     final caps = AppScope.of(context).engine.caps;
     return Scaffold(
-      appBar: AppBar(title: const Text('Join as a speaker')),
+      appBar: AppBar(title: const Text('Join the Sound 🔊')),
       body: SafeArea(
         child: ListView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -80,14 +80,14 @@ class _JoinScreenState extends State<JoinScreen> {
                     children: [
                       Icon(Icons.qr_code_scanner, size: 64, color: scheme.onPrimary),
                       const SizedBox(height: 12),
-                      Text('Scan QR code',
+                      Text('Scan Host QR Code',
                           style: TextStyle(
                               color: scheme.onPrimary,
                               fontSize: 22,
                               fontWeight: FontWeight.w700)),
                       const SizedBox(height: 6),
                       Text(
-                        'Joins the Wi-Fi and finds the host automatically',
+                        'One-tap connect: links to Wi-Fi and syncs the sound automatically',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: scheme.onPrimary.withValues(alpha: 0.85)),
                       ),
@@ -101,28 +101,28 @@ class _JoinScreenState extends State<JoinScreen> {
               onPressed: () => _join(const JoinInfo(ssid: '', password: ''),
                   alreadyOnWifi: true),
               icon: const Icon(Icons.wifi),
-              label: const Text("I'm already on the host's Wi-Fi"),
+              label: const Text("I'm already on the same Wi-Fi"),
             ),
             const SizedBox(height: 8),
             Card(
               clipBehavior: Clip.antiAlias,
               child: ExpansionTile(
                 leading: const Icon(Icons.keyboard_outlined),
-                title: const Text('Enter details by hand'),
+                title: const Text('Connect manually'),
                 childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 children: [
                   TextField(
                     controller: _ssid,
                     autocorrect: false,
                     textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(labelText: 'Network name'),
+                    decoration: const InputDecoration(labelText: 'Wi-Fi name'),
                   ),
                   const SizedBox(height: 10),
                   TextField(
                     controller: _password,
                     autocorrect: false,
                     textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(labelText: 'Password'),
+                    decoration: const InputDecoration(labelText: 'Wi-Fi password'),
                   ),
                   const SizedBox(height: 10),
                   TextField(
@@ -133,22 +133,20 @@ class _JoinScreenState extends State<JoinScreen> {
                     textInputAction: TextInputAction.go,
                     onSubmitted: (_) => _joinManual(),
                     decoration: const InputDecoration(
-                      labelText: 'Host address (optional)',
-                      helperText: 'Shown under the QR code on the host',
+                      labelText: 'Host IP address (optional)',
+                      helperText: 'Found under the host’s QR code',
                     ),
                   ),
                   const SizedBox(height: 14),
-                  FilledButton(onPressed: _joinManual, child: const Text('Join')),
+                  FilledButton(onPressed: _joinManual, child: const Text('Connect to Party')),
                 ],
               ),
             ),
             const SizedBox(height: 18),
             InfoBanner(
               caps.isIOS
-                  ? 'iPhone asks once to join the network. Keep this app open (or '
-                      'playing in the background) to keep hearing the host.'
-                  : 'Android shows a "Connect to device" prompt. Pick the host\'s '
-                      'network to continue.',
+                  ? 'When prompted, tap "Join" to connect. Keep Party Sync running so the sound keeps playing!'
+                  : 'When prompted, tap to accept the Wi-Fi connection and you’ll jump right into the party.',
               icon: Icons.lightbulb_outline,
             ),
           ],

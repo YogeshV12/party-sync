@@ -32,7 +32,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         return;
       }
     }
-    setState(() => _hint = "That QR code isn't a Party Sync or Wi-Fi code.");
+    setState(() => _hint = "Not a Party Sync code. Scan the QR on your friend's screen!");
   }
 
   @override
@@ -42,7 +42,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: const Text('Scan host QR code'),
+        title: const Text('Scan Host QR Code'),
       ),
       body: Stack(
         fit: StackFit.expand,
@@ -63,7 +63,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             right: 24,
             bottom: 48,
             child: Text(
-              _hint ?? "Point at the QR code on the host's (or a relay's) screen.",
+              _hint ?? "Point your camera at the QR code on your friend's screen.",
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.white, fontSize: 15),
             ),

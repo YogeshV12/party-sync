@@ -26,6 +26,9 @@ enum SessionPhase {
   syncing,
   live,
   reconnecting,
+
+  /// The host stopped the session on purpose. Not a failure, so no retrying.
+  ended,
   error,
 }
 
@@ -571,6 +574,8 @@ class SessionEngine extends ChangeNotifier {
         _onNetmap(d);
       case MsgType.reject:
         _onReject(d);
+      case MsgType.end:
+        _onEnd(d);
       default:
         break;
     }
@@ -682,6 +687,40 @@ class SessionEngine extends ChangeNotifier {
     } else if (reason != 'self' && _discovery != null) {
       notice = 'Found a phone that said: $reason';
       _scheduleNotify();
+    }
+  }
+
+  void _onEnd(ReceivedDatagram d) {
+    if (!_fromParent(d) || phase == SessionPhase.ended) return;
+    if ((decodeJsonBody(d.data)?['sid'] as num?)?.toInt() != sessionId) return;
+    unawaited(_endSession());
+  }
+
+  /// The host (or the relay we hang off) says the session is over. Pass it down
+  /// first, then leave quietly: once the host's network disappears the OS
+  /// switches this phone to another Wi-Fi or mobile data, and that must not
+  /// read as a lost connection.
+  Future<void> _endSession() async {
+    final gen = _generation;
+    trace('session ended by host');
+    phase = SessionPhase.ended;
+    notice = null;
+    _notify();
+    await _announceEnd();
+    if (gen != _generation) return;
+    await _teardown();
+    _notify();
+  }
+
+  /// Tells every phone below us the session is over. Sent a few times because
+  /// UDP drops packets, and given a moment to leave before our network goes.
+  Future<void> _announceEnd() async {
+    final server = _server;
+    if (server == null || server.children.isEmpty) return;
+    final end = encodeJson(MsgType.end, {'sid': sessionId});
+    for (var i = 0; i < 3; i++) {
+      server.broadcast(end);
+      await Future<void>.delayed(const Duration(milliseconds: 60));
     }
   }
 
@@ -934,7 +973,10 @@ class SessionEngine extends ChangeNotifier {
     await _captureSub?.cancel();
     _captureSub = null;
     final wasRole = role;
-    if (wasRole == SessionRole.host) await _quietly(audio.stopCapture);
+    if (wasRole == SessionRole.host) {
+      await _announceEnd();
+      await _quietly(audio.stopCapture);
+    }
     if (wasRole == SessionRole.listener) {
       _sendToParent(encodeJson(MsgType.leave, {'id': nodeId}));
       await _quietly(audio.stopPlayback);

@@ -15,11 +15,11 @@ class ListenerScreen extends StatelessWidget {
     final engine = AppScope.of(context).engine;
     final ok = engine.phase != SessionPhase.live ||
         await confirm(context,
-            title: 'Leave the session?',
+            title: 'Leave the party?',
             message: engine.relaying
-                ? 'Phones connected through you will lose the sound too.'
-                : 'This phone stops playing.',
-            action: 'Leave');
+                ? 'Friends connected through your booster will disconnect too.'
+                : 'This phone will stop playing sound.',
+            action: 'Leave Party');
     if (!ok || !context.mounted) return;
     await engine.stop();
     if (context.mounted) Navigator.pop(context);
@@ -38,7 +38,7 @@ class ListenerScreen extends StatelessWidget {
         listenable: engine,
         builder: (context, _) => Scaffold(
           appBar: AppBar(
-            title: Text(engine.sessionName.isEmpty ? 'Speaker' : engine.sessionName),
+            title: Text(engine.sessionName.isEmpty ? 'Speaker Mode 🔊' : engine.sessionName),
             actions: [
               TextButton.icon(
                 onPressed: () => _leave(context),
@@ -69,6 +69,17 @@ class ListenerScreen extends StatelessWidget {
         },
       );
     }
+    if (engine.phase == SessionPhase.ended) {
+      return _EndedView(
+        name: engine.sessionName,
+        onDone: () => _leave(context),
+        onJoinAnother: () {
+          engine.stop();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (_) => const JoinScreen()));
+        },
+      );
+    }
     final connected = engine.phase == SessionPhase.live ||
         engine.phase == SessionPhase.reconnecting;
     return ListView(
@@ -86,7 +97,7 @@ class ListenerScreen extends StatelessWidget {
           _Alternatives(engine: engine),
         ],
         if (connected) ...[
-          const SectionTitle('This speaker'),
+          const SectionTitle('Audio output'),
           _OutputCard(engine: engine),
           const SizedBox(height: 12),
           _Stats(engine: engine),
@@ -94,18 +105,62 @@ class ListenerScreen extends StatelessWidget {
             const SizedBox(height: 12),
             InfoBanner(
                 '${engine.playback.route.isEmpty ? 'This speaker' : engine.playback.route} '
-                'takes ${engine.playback.outputLatencyMs.round()} ms to play audio, '
-                "more than the host's delay allows, so nothing can be heard. Ask the "
-                'host to raise "Speakers play behind the mic by" to $needed ms or more.',
+                'has high Bluetooth lag (${engine.playback.outputLatencyMs.round()} ms), '
+                "longer than the host's sync buffer. Ask the host to raise "
+                '"Sound sync buffer" to $needed ms or more so your sound can play!',
                 warning: true,
                 icon: Icons.bluetooth_audio),
           ],
-          const SectionTitle('Speaker lag correction'),
+          const SectionTitle('Echo fix (fine-tune sync)'),
           _OffsetCard(engine: engine, scope: scope),
-          const SectionTitle('Share to more phones'),
+          const SectionTitle('Boost range for friends 📡'),
           _RelayCard(engine: engine),
         ],
       ],
+    );
+  }
+}
+
+class _EndedView extends StatelessWidget {
+  const _EndedView({
+    required this.name,
+    required this.onDone,
+    required this.onJoinAnother,
+  });
+  final String name;
+  final VoidCallback onDone;
+  final VoidCallback onJoinAnother;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.stop_circle_outlined, size: 56, color: scheme.onSurfaceVariant),
+            const SizedBox(height: 16),
+            Text('The party has wrapped up 🎉',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(
+              name.isEmpty
+                  ? 'The host ended the party.'
+                  : '"$name" was ended by the host.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 24),
+            FilledButton(onPressed: onDone, child: const Text('Back to Home')),
+            const SizedBox(height: 10),
+            OutlinedButton(
+                onPressed: onJoinAnother, child: const Text('Join another party')),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -119,35 +174,36 @@ class _StatusHero extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final ssid = engine.upstreamJoin?.ssid ?? '';
     final (IconData icon, String title, String subtitle, bool busy) = switch (engine.phase) {
-      SessionPhase.starting => (Icons.hourglass_top, 'Getting ready…', '', true),
+      SessionPhase.starting => (Icons.hourglass_top, 'Tuning in…', 'Warming up the speakers', true),
       SessionPhase.joiningWifi => (
           Icons.wifi,
-          'Joining ${ssid.isEmpty ? 'Wi-Fi' : ssid}…',
-          'Approve the system prompt to connect.',
+          'Connecting to ${ssid.isEmpty ? 'party Wi-Fi' : ssid}…',
+          'Tap Allow on the pop-up to connect.',
           true
         ),
       SessionPhase.discovering => (
           Icons.travel_explore,
-          'Looking for the host…',
-          'Searching this Wi-Fi network.',
+          'Finding the host…',
+          'Searching for the party on this Wi-Fi.',
           true
         ),
-      SessionPhase.syncing => (Icons.timer_outlined, 'Syncing clocks…', 'Almost there.', true),
+      SessionPhase.syncing => (Icons.timer_outlined, 'Locking into sync…', 'Aligning beat timing.', true),
       SessionPhase.live when engine.hostMuted => (
           Icons.mic_off,
-          'Host is muted',
-          "You're connected. Sound resumes when they unmute.",
+          'Host is muted 🤫',
+          'Connected! Sound will drop back in when they unmute.',
           false
         ),
       SessionPhase.live => (
           Icons.graphic_eq,
-          'Playing',
-          'via ${engine.parentName.isEmpty ? 'host' : engine.parentName}'
-              ' · ${engine.depth} ${engine.depth == 1 ? 'hop' : 'hops'} from the mic',
+          'Bumping in Sync 🔥',
+          engine.depth <= 1
+              ? 'Directly linked to ${engine.parentName.isEmpty ? 'host' : engine.parentName}'
+              : 'Synced via ${engine.parentName.isEmpty ? 'booster' : engine.parentName} (${engine.depth} hops from mic)',
           false
         ),
-      SessionPhase.reconnecting => (Icons.sync_problem, 'Reconnecting…', '', true),
-      _ => (Icons.speaker, 'Not connected', '', false),
+      SessionPhase.reconnecting => (Icons.sync_problem, 'Re-syncing…', 'Reconnecting to the stream', true),
+      _ => (Icons.speaker, 'Not connected yet', '', false),
     };
     final live = engine.phase == SessionPhase.live;
     return Card(
@@ -216,8 +272,8 @@ class _OutputCard extends StatelessWidget {
         title: Text(p.route.isEmpty ? 'Phone speaker' : p.route,
             style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(p.isBluetooth
-            ? 'Bluetooth adds ${p.outputLatencyMs.round()} ms. Already corrected.'
-            : 'Output delay ${p.outputLatencyMs.round()} ms. Already corrected.'),
+            ? 'Bluetooth delay (+${p.outputLatencyMs.round()} ms) automatically zeroed out.'
+            : 'Speaker delay (+${p.outputLatencyMs.round()} ms) automatically calibrated.'),
       ),
     );
   }
@@ -241,25 +297,25 @@ class _Stats extends StatelessWidget {
       childAspectRatio: 2.3,
       children: [
         StatTile(
-          label: 'Clock sync',
-          value: syncMs == null ? '…' : '± ${syncMs.toStringAsFixed(1)} ms',
+          label: 'Sync timing',
+          value: syncMs == null ? '…' : '±${syncMs.toStringAsFixed(1)} ms',
           color: syncMs == null
               ? null
               : healthColor(scheme, syncMs < 3 ? 1 : (syncMs < 10 ? 0.5 : 0)),
         ),
         StatTile(
-          label: 'Buffer ahead',
+          label: 'Audio buffer',
           value: engine.hostMuted ? '—' : '${p.bufferedMs.round()} ms',
           color: engine.hostMuted ? null : healthColor(scheme, bufferHealth(p.bufferedMs)),
         ),
         StatTile(
-          label: 'Packet loss',
-          value: '${engine.lossPct.toStringAsFixed(1)} %',
+          label: 'Stream drops',
+          value: '${engine.lossPct.toStringAsFixed(1)}%',
           color: healthColor(
               scheme, engine.lossPct < 1 ? 1 : (engine.lossPct < 5 ? 0.5 : 0)),
         ),
         StatTile(
-          label: 'Drift fix',
+          label: 'Auto-adjust',
           value: '${p.syncErrorMs.abs().toStringAsFixed(1)} ms',
         ),
       ],
@@ -287,10 +343,10 @@ class _OffsetCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     ms == 0
-                        ? 'No correction'
+                        ? 'Default sync (Zero offset)'
                         : ms > 0
-                            ? 'Playing ${ms.round()} ms earlier'
-                            : 'Playing ${(-ms).round()} ms later',
+                            ? 'Nudged ${ms.round()} ms earlier'
+                            : 'Nudged ${(-ms).round()} ms later',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -314,8 +370,8 @@ class _OffsetCard extends StatelessWidget {
               onChangeEnd: (v) => scope.prefs.outputOffsetMs = v.roundToDouble(),
             ),
             Text(
-              'If this speaker sounds behind the others, slide right. If it '
-              'sounds ahead, slide left. Most speakers need no correction.',
+              'Hearing an echo? If this speaker sounds behind the squad, slide right. '
+              'If it sounds ahead, slide left. (Most speakers already sound perfect without this!)',
               style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13, height: 1.35),
             ),
           ],
@@ -335,9 +391,9 @@ class _RelayCard extends StatelessWidget {
     if (!engine.caps.canRelay) {
       return InfoBanner(
         engine.caps.isIOS
-            ? "iPhones can't share a Wi-Fi network while connected to one. "
-                'An Android phone in the room can relay instead.'
-            : "This phone doesn't support Wi-Fi Direct, so it can't relay.",
+            ? "iPhones can't share Wi-Fi while listening. "
+                'Have an Android friend turn on signal booster instead!'
+            : "This phone doesn't support Wi-Fi Direct booster mode.",
         icon: Icons.wifi_tethering_off,
       );
     }
@@ -356,13 +412,13 @@ class _RelayCard extends StatelessWidget {
                     width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.5))
                 : Icon(Icons.wifi_tethering,
                     color: engine.relaying ? scheme.primary : null),
-            title: const Text('Relay to more phones'),
+            title: const Text('Boost signal for friends'),
             subtitle: Text(tooDeep
-                ? 'Too far from the host to relay (${engine.depth} hops).'
+                ? 'Too far from host to boost range further (${engine.depth} hops).'
                 : engine.relaying
-                    ? '${engine.childCount} '
-                        '${engine.childCount == 1 ? 'phone' : 'phones'} connected through you'
-                    : 'Creates a Wi-Fi network from this phone so more phones can join.'),
+                    ? 'Boosting sound for ${engine.childCount} '
+                        '${engine.childCount == 1 ? 'friend' : 'friends'}'
+                    : 'Turns your phone into a Wi-Fi booster so friends further away can connect.'),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           ),
         ),
@@ -373,11 +429,11 @@ class _RelayCard extends StatelessWidget {
         if (engine.relaying && join != null) ...[
           const SizedBox(height: 12),
           const InfoBanner(
-            'Keep this phone plugged in if you can. Relaying uses more battery.',
+            'Plug into a charger if possible: boosting range uses extra battery.',
             icon: Icons.battery_charging_full,
           ),
           const SizedBox(height: 12),
-          QrPanel(join: join, title: 'Scan to join through this phone'),
+          QrPanel(join: join, title: 'Scan to connect through booster 📲'),
         ],
       ],
     );
@@ -404,7 +460,7 @@ class _Alternatives extends StatelessWidget {
           children: [
             ListTile(
               leading: const Icon(Icons.refresh),
-              title: const Text('Try the same network again'),
+              title: const Text('Reconnect to same network'),
               trailing: FilledButton.tonal(
                 style: FilledButton.styleFrom(minimumSize: compact),
                 onPressed: engine.retryConnection,
@@ -414,8 +470,8 @@ class _Alternatives extends StatelessWidget {
             for (final EntryPoint e in entries)
               ListTile(
                 leading: Icon(e.isHost ? Icons.mic : Icons.wifi_tethering),
-                title: Text(e.isHost ? '${e.name} (host)' : e.name),
-                subtitle: Text('${e.ssid} · ${e.children} connected'),
+                title: Text(e.isHost ? '${e.name} (host 🎤)' : '${e.name} (booster 📡)'),
+                subtitle: Text('${e.ssid} · ${e.children} in sync'),
                 trailing: FilledButton(
                   style: FilledButton.styleFrom(minimumSize: compact),
                   onPressed: () => engine.switchTo(e),

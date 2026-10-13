@@ -14,9 +14,9 @@ class HostLiveScreen extends StatelessWidget {
     final engine = AppScope.of(context).engine;
     final ok = engine.phase != SessionPhase.live ||
         await confirm(context,
-            title: 'End the session?',
-            message: 'Every phone stops playing.',
-            action: 'End');
+            title: 'End the party?',
+            message: 'This will disconnect all speakers and stop the sound.',
+            action: 'End Party');
     if (!ok || !context.mounted) return;
     await engine.stop();
     if (context.mounted) Navigator.pop(context);
@@ -35,12 +35,12 @@ class HostLiveScreen extends StatelessWidget {
         listenable: engine,
         builder: (context, _) => Scaffold(
           appBar: AppBar(
-            title: Text(engine.sessionName.isEmpty ? 'Hosting' : engine.sessionName),
+            title: Text(engine.sessionName.isEmpty ? 'On the Mic 🎤' : engine.sessionName),
             actions: [
               TextButton.icon(
                 onPressed: () => _end(context),
                 icon: const Icon(Icons.stop_circle_outlined),
-                label: const Text('End'),
+                label: const Text('End Party'),
               ),
             ],
           ),
@@ -70,9 +70,9 @@ class HostLiveScreen extends StatelessWidget {
         break;
       default:
         return BusyView(
-          title: 'Starting…',
+          title: 'Firing up the party…',
           subtitle: engine.hostMode == HostNetworkMode.appNetwork
-              ? 'Creating the network'
+              ? 'Creating your party network'
               : null,
         );
     }
@@ -86,11 +86,11 @@ class HostLiveScreen extends StatelessWidget {
           InfoBanner(engine.notice!, warning: true, icon: Icons.wifi_off),
         ],
         const SizedBox(height: 16),
-        if (join != null) QrPanel(join: join, title: 'Scan to join'),
-        const SectionTitle('Sync delay'),
+        if (join != null) QrPanel(join: join, title: 'Scan to join the sound 📲'),
+        const SectionTitle('Sound sync buffer'),
         _SyncDelayCard(engine: engine, scope: scope),
-        SectionTitle('Network · ${engine.listenerCount} '
-            '${engine.listenerCount == 1 ? 'speaker' : 'speakers'}'),
+        SectionTitle('Squad speakers · ${engine.listenerCount} '
+            '${engine.listenerCount == 1 ? 'phone' : 'phones'} connected'),
         NetworkTree(nodes: engine.nodes, rootId: engine.nodeId),
       ],
     );
@@ -142,7 +142,7 @@ class _MicCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 22),
-            Text(muted ? 'Muted' : 'Live',
+            Text(muted ? 'Mic Muted 🤫' : 'Live on Air 🎙️',
                 style: Theme.of(context)
                     .textTheme
                     .headlineSmall
@@ -150,11 +150,11 @@ class _MicCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               muted
-                  ? 'Tap the mic to go live again'
+                  ? 'Tap the mic to unmute and drop back in'
                   : engine.listenerCount == 0
-                      ? 'Waiting for speakers to join'
-                      : 'Playing on ${engine.listenerCount} '
-                          '${engine.listenerCount == 1 ? 'phone' : 'phones'}',
+                      ? 'Waiting for the squad to scan and join…'
+                      : 'Streaming live to ${engine.listenerCount} '
+                          '${engine.listenerCount == 1 ? 'phone speaker' : 'phone speakers'}',
               style: TextStyle(color: scheme.onSurfaceVariant),
             ),
           ],
@@ -181,7 +181,7 @@ class _SyncDelayCard extends StatelessWidget {
             Row(
               children: [
                 const Expanded(
-                  child: Text('Speakers play behind the mic by',
+                  child: Text('Buffer delay before sound plays',
                       style: TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 Text('${engine.syncDelayMs} ms',
@@ -199,9 +199,8 @@ class _SyncDelayCard extends StatelessWidget {
               onChangeEnd: (v) => scope.prefs.syncDelayMs = v.round(),
             ),
             Text(
-              'Raise it if speakers in the network list turn red or the sound '
-              'cuts out. Bluetooth speakers and relays need more delay than '
-              'phone speakers.',
+              'Slide up if audio stutters or drops out. Bluetooth speakers and '
+              'signal boosters need a bit more buffer time to stay perfectly in sync.',
               style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13, height: 1.35),
             ),
           ],

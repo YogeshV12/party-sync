@@ -72,8 +72,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 14),
             Text(
-              'One phone is the mic. Every other phone, and the Bluetooth '
-              'speaker connected to it, plays your voice in sync.',
+              "Turn your squad's phones into one massive sound system. 🔊 "
+              'One phone grabs the mic, and every phone (plus any Bluetooth '
+              'speaker hooked up) pumps the sound in sync.',
               style: Theme.of(context)
                   .textTheme
                   .bodyLarge
@@ -84,17 +85,17 @@ class _HomeScreenState extends State<HomeScreen> {
               controller: _name,
               textCapitalization: TextCapitalization.words,
               decoration: const InputDecoration(
-                labelText: 'Your name',
-                helperText: 'Shown to the host and other phones',
+                labelText: 'Your name or nickname',
+                helperText: 'What the squad sees on their screen',
                 prefixIcon: Icon(Icons.person_outline),
               ),
               onChanged: _saveName,
             ),
-            const SectionTitle('What do you want to do?'),
+            const SectionTitle("What's the vibe?"),
             _RoleCard(
               icon: Icons.mic,
-              title: 'Be the mic',
-              subtitle: 'Host the session. Your voice plays on every phone that joins.',
+              title: 'Grab the Mic 🎤',
+              subtitle: "Host the party. Whatever you say or stream plays in real-time through everyone's speakers.",
               primary: true,
               onTap: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const HostSetupScreen())),
@@ -102,21 +103,18 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 12),
             _RoleCard(
               icon: Icons.speaker_group,
-              title: 'Join as a speaker',
-              subtitle: "Scan the host's QR code and play through this phone or "
-                  'its Bluetooth speaker.',
+              title: 'Join the Sound 🔊',
+              subtitle: "Scan the host's QR code. Turn this phone or your Bluetooth speaker into part of the party.",
               onTap: () => Navigator.push(
                   context, MaterialPageRoute(builder: (_) => const JoinScreen())),
             ),
             const SizedBox(height: 20),
             InfoBanner(
               caps.canRelay
-                  ? 'This phone can also relay: once it is playing, it can share '
-                      'the session on its own network so more phones can join.'
+                  ? 'Pro tip: This phone can boost range! Once you are connected, you can share the vibe with even more friends nearby.'
                   : caps.isIOS
-                      ? 'iPhones can host or listen. Relaying the session to more '
-                          'phones needs an Android phone.'
-                      : 'This phone can host or listen.',
+                      ? 'iPhones can host or join as speakers. To boost signal range for friends further away, use an Android phone.'
+                      : 'Ready to host the party or join the sound!',
               icon: Icons.hub_outlined,
             ),
           ],

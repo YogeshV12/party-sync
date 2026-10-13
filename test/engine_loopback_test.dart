@@ -268,6 +268,51 @@ void main() {
     expect(net.joined, isEmpty, reason: 'already on the host network');
   }, timeout: const Timeout(Duration(seconds: 30)));
 
+  test('host stopping ends the session for everyone below, without a "lost" warning',
+      () async {
+    final hostAudio = FakeAudio(), relayAudio = FakeAudio(), leafAudio = FakeAudio();
+    final host = makeEngine(hostAudio, FakeNet(), 47951, 'Host');
+    final relayNet = FakeNet(canRelay: true);
+    final relay = makeEngine(relayAudio, relayNet, 47952, 'Relay');
+    final leaf = makeEngine(leafAudio, FakeNet(), 47953, 'Leaf');
+    addTearDown(() async {
+      await leaf.stop();
+      await relay.stop();
+      await host.stop();
+    });
+
+    await host.startHost(name: 'Bye', mode: HostNetworkMode.phoneHotspot, ssid: 'Net');
+    await relay.joinSession(
+        JoinInfo(ssid: '', password: '', hosts: const ['127.0.0.1'], port: 47951),
+        alreadyOnWifi: true);
+    await waitFor(() => relay.phase == SessionPhase.live, reason: 'relay live');
+    await relay.setRelaying(true);
+    await leaf.joinSession(relay.relayJoin!, alreadyOnWifi: true);
+    await waitFor(() => leaf.phase == SessionPhase.live, reason: 'leaf live');
+
+    // Every phase the leaf passes through from now on.
+    final leafPhases = <SessionPhase>[];
+    leaf.addListener(() => leafPhases.add(leaf.phase));
+
+    await host.stop();
+
+    await waitFor(() => relay.phase == SessionPhase.ended,
+        timeout: const Duration(seconds: 2), reason: 'relay told the session ended');
+    await waitFor(() => leaf.phase == SessionPhase.ended,
+        timeout: const Duration(seconds: 2), reason: 'leaf told the session ended');
+    expect(leafPhases, isNot(contains(SessionPhase.reconnecting)));
+    expect(leaf.notice, isNull);
+    expect(leaf.error, isNull);
+    expect(leaf.sessionName, 'Bye');
+    expect(leafAudio.playing, isFalse, reason: 'speaker released');
+    expect(relayAudio.playing, isFalse);
+    expect(relayNet.networksRemoved, 1, reason: 'relay network torn down after the leaf was told');
+
+    // Leaving afterwards returns to idle.
+    await leaf.stop();
+    expect(leaf.phase, SessionPhase.idle);
+  }, timeout: const Timeout(Duration(seconds: 30)));
+
   test('asks for a longer host delay when output latency exceeds the buffer', () {
     final leaf = makeEngine(FakeAudio(), FakeNet(), 47941, 'Leaf')
       ..phase = SessionPhase.live

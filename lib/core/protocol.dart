@@ -19,7 +19,11 @@ enum MsgType {
   status(6),
   netmap(7),
   leave(8),
-  reject(9);
+  reject(9),
+
+  /// Host → everyone below: the session is over on purpose. Relays pass it on.
+  /// Older builds ignore it and fall back to noticing the silence.
+  end(10);
 
   const MsgType(this.code);
   final int code;

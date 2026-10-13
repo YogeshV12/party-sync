@@ -38,8 +38,8 @@ class _QrPanelState extends State<QrPanel> {
             const SizedBox(height: 12),
             SegmentedButton<bool>(
               segments: const [
-                ButtonSegment(value: false, label: Text('App code'), icon: Icon(Icons.qr_code_2)),
-                ButtonSegment(value: true, label: Text('Wi-Fi code'), icon: Icon(Icons.wifi)),
+                ButtonSegment(value: false, label: Text('Party code'), icon: Icon(Icons.qr_code_2)),
+                ButtonSegment(value: true, label: Text('Camera QR'), icon: Icon(Icons.camera_alt_outlined)),
               ],
               selected: {_wifiCode},
               onSelectionChanged: (s) => setState(() => _wifiCode = s.first),
@@ -48,7 +48,7 @@ class _QrPanelState extends State<QrPanel> {
             if (join.ssid.isEmpty)
               const Padding(
                 padding: EdgeInsets.all(24),
-                child: Text('Waiting for network details…'),
+                child: Text('Setting up party network…'),
               )
             else
               Container(
@@ -71,15 +71,15 @@ class _QrPanelState extends State<QrPanel> {
             const SizedBox(height: 12),
             Text(
               _wifiCode
-                  ? "Scan with the phone's Camera app to join the Wi-Fi, then open "
-                      "Party Sync → \"I'm already on the host's Wi-Fi\"."
-                  : 'Scan in Party Sync → Join as a speaker. It joins the Wi-Fi '
-                      'and finds this phone by itself.',
+                  ? "Scan with your phone's Camera app to join the Wi-Fi first, then open "
+                      'Party Sync and tap "I\'m already on the same Wi-Fi".'
+                  : 'Scan with Party Sync → "Join the Sound". Connects to Wi-Fi '
+                      'and syncs the sound automatically in one tap!',
               textAlign: TextAlign.center,
               style: TextStyle(color: scheme.onSurfaceVariant, height: 1.35),
             ),
             const SizedBox(height: 8),
-            _DetailRow(label: 'Network', value: join.ssid),
+            _DetailRow(label: 'Wi-Fi', value: join.ssid),
             _DetailRow(
               label: 'Password',
               value: _showPassword ? join.password : '•' * join.password.length.clamp(0, 12),
