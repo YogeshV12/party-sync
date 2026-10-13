@@ -234,4 +234,39 @@ void main() {
     expect(leafAudio.pushes, isEmpty);
     expect(leaf.phase, SessionPhase.live, reason: 'pongs keep the link alive');
   }, timeout: const Timeout(Duration(seconds: 30)));
+
+  test('a too-short Wi-Fi password fails with a clear error before joining', () async {
+    final net = FakeNet();
+    final leaf = makeEngine(FakeAudio(), net, 47921, 'Leaf');
+    addTearDown(leaf.stop);
+    await leaf.joinSession(const JoinInfo(
+        ssid: 'yogi speaks', password: 'abcde', hosts: ['172.20.10.1']));
+    expect(leaf.phase, SessionPhase.error);
+    expect(leaf.error, contains('5 characters'));
+    expect(net.joined, isEmpty, reason: 'must not ask the OS to join');
+  });
+
+  test('skips the OS join when the host is already reachable on this Wi-Fi', () async {
+    final host = makeEngine(FakeAudio(), FakeNet(), 47931, 'Host');
+    final net = FakeNet();
+    final leaf = makeEngine(FakeAudio(), net, 47932, 'Leaf');
+    addTearDown(() async {
+      await leaf.stop();
+      await host.stop();
+    });
+    await host.startHost(name: 'Home', mode: HostNetworkMode.phoneHotspot, ssid: 'Hot');
+    await leaf.joinSession(const JoinInfo(
+        ssid: 'Hot', password: 'password1', hosts: ['127.0.0.1'], port: 47931));
+    await waitFor(() => leaf.phase == SessionPhase.live, reason: 'leaf live');
+    expect(net.joined, isEmpty, reason: 'already on the host network');
+  }, timeout: const Timeout(Duration(seconds: 30)));
+
+  test('asks for a longer host delay when output latency exceeds the buffer', () {
+    final leaf = makeEngine(FakeAudio(), FakeNet(), 47941, 'Leaf')
+      ..phase = SessionPhase.live
+      ..playback = const PlaybackStats(outputLatencyMs: 534, bufferedMs: 0);
+    expect(leaf.neededSyncDelayMs, 750);
+    leaf.playback = const PlaybackStats(outputLatencyMs: 60, bufferedMs: 250);
+    expect(leaf.neededSyncDelayMs, isNull);
+  });
 }

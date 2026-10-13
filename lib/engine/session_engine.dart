@@ -127,6 +127,9 @@ class SessionEngine extends ChangeNotifier {
   int _windowLost = 0;
   int _windowStartUs = 0;
   double lossPct = 0;
+  int _windowPushed = 0;
+  int _windowPeak = 0;
+  int _lastLeadUs = 0;
   PlaybackStats playback = PlaybackStats.empty;
   double outputOffsetMs = 0;
   List<EntryPoint> alternatives = const [];
@@ -149,6 +152,15 @@ class SessionEngine extends ChangeNotifier {
   int get childCount => _server?.children.length ?? 0;
   int get listenerCount => nodes.length - (nodes.containsKey(nodeId) ? 1 : 0);
   bool get canRelayHere => caps.canRelay && depth < maxDepth;
+
+  /// Host sync delay (ms) this speaker needs, or null if it's keeping up. A
+  /// Bluetooth speaker can take longer to play a chunk than the host's delay
+  /// gives it, so the chunk is always late and the buffer stays empty.
+  int? get neededSyncDelayMs {
+    if (phase != SessionPhase.live || playback.outputLatencyMs <= 0) return null;
+    if (playback.bufferedMs >= 40) return null;
+    return ((playback.outputLatencyMs + 200) / 50).ceil() * 50;
+  }
 
   // ========================================================================
   // Host
@@ -178,6 +190,7 @@ class SessionEngine extends ChangeNotifier {
         AppPermission.notifications,
         if (mode == HostNetworkMode.appNetwork) AppPermission.wifi,
       });
+      trace('host start mode=$mode perms=$perms');
       if (perms[AppPermission.microphone] != true) {
         throw const SessionError('Microphone access is needed to be the mic.');
       }
@@ -204,6 +217,7 @@ class SessionEngine extends ChangeNotifier {
       }
       if (gen != _generation) return;
       hostJoin = join;
+      trace('host join info: ssid=${join.ssid} hosts=${join.hosts} port=${join.port}');
       _updateHotspotNotice();
 
       await _startServer(
@@ -211,6 +225,7 @@ class SessionEngine extends ChangeNotifier {
         rejectReason: (j) => j.id == nodeId ? 'self' : null,
         onStatus: (_, status) => _recordNode(status),
       );
+      trace('host server listening on :$serverPort');
       unawaited(_primeLocalNetworkAccess());
 
       _captureClock.reset();
@@ -229,6 +244,7 @@ class SessionEngine extends ChangeNotifier {
       unawaited(_hostHousekeeping());
     } catch (e) {
       if (gen != _generation) return;
+      trace('host start FAILED: $e');
       await _fail(e);
     }
     _notify();
@@ -362,6 +378,7 @@ class SessionEngine extends ChangeNotifier {
     upstreamJoin = info;
     sessionName = info.sessionName;
     sessionId = info.sessionId ?? 0;
+    trace('join: ssid=${info.ssid} hosts=${info.hosts} port=${info.port} alreadyOnWifi=$alreadyOnWifi');
     _notify();
 
     try {
@@ -385,6 +402,7 @@ class SessionEngine extends ChangeNotifier {
       _every(const Duration(seconds: 2), _sendStatus);
     } catch (e) {
       if (gen != _generation) return;
+      trace('join FAILED: $e');
       await _fail(e);
     }
     _notify();
@@ -432,26 +450,33 @@ class SessionEngine extends ChangeNotifier {
   Future<void> _connectUpstream(JoinInfo info,
       {required bool joinWifi, required int gen}) async {
     if (joinWifi) {
+      if (!isValidWifiPassword(info.password)) {
+        throw SessionError(
+            'The Wi-Fi password in this code is ${info.password.length} characters, '
+            'but Wi-Fi passwords are 8-63. The host probably mistyped it: ask them '
+            'to re-enter it, or join "${info.ssid}" in your Wi-Fi settings and tap '
+            '"I\'m already on the host\'s Wi-Fi".');
+      }
+      // Already on the host's Wi-Fi (joined by hand in Settings)? Then there is
+      // nothing to join, and asking the OS for a network by name could fail.
+      phase = SessionPhase.discovering;
+      _notify();
+      if (await _discoverUpstream(info, gen, window: const Duration(seconds: 3))) {
+        trace('host already reachable on the current network');
+        return;
+      }
+      if (gen != _generation) return;
       phase = SessionPhase.joiningWifi;
       _notify();
+      trace('joining wifi "${info.ssid}"...');
       await net.joinWifi(info.ssid, info.password);
+      trace('wifi joined');
       if (gen != _generation) return;
     }
     phase = SessionPhase.discovering;
     _notify();
 
-    _closeUpstream();
-    final socket = await net.withUpstreamBinding(
-        () => RawDatagramSocket.bind(InternetAddress.anyIPv4, 0));
-    final endpoint = UdpEndpoint(socket);
-    if (gen != _generation) {
-      endpoint.close();
-      return;
-    }
-    _upstream = endpoint;
-    _upstreamSub = endpoint.datagrams.listen(_onUpstream);
-
-    if (!await _discover(endpoint, info)) {
+    if (!await _discoverUpstream(info, gen)) {
       if (gen != _generation) return;
       throw const SessionError(
           "Couldn't find the host on this Wi-Fi. Check the host is live and "
@@ -459,9 +484,29 @@ class SessionEngine extends ChangeNotifier {
     }
   }
 
-  Future<bool> _discover(UdpEndpoint endpoint, JoinInfo info) async {
+  /// Opens the upstream socket on the Wi-Fi and looks for the parent for up to
+  /// [window]. Leaves the socket open on success; closes it otherwise.
+  Future<bool> _discoverUpstream(JoinInfo info, int gen,
+      {Duration window = const Duration(seconds: 15)}) async {
+    _closeUpstream();
+    final socket = await net.withUpstreamBinding(
+        () => RawDatagramSocket.bind(InternetAddress.anyIPv4, 0));
+    final endpoint = UdpEndpoint(socket);
+    trace('upstream socket bound on :${socket.port}, local=${await localLanAddresses()}');
+    if (gen != _generation) {
+      endpoint.close();
+      return false;
+    }
+    _upstream = endpoint;
+    _upstreamSub = endpoint.datagrams.listen(_onUpstream);
+    if (await _discover(endpoint, info, window)) return true;
+    if (identical(_upstream, endpoint)) _closeUpstream();
+    return false;
+  }
+
+  Future<bool> _discover(UdpEndpoint endpoint, JoinInfo info, Duration window) async {
     final discovery = _discovery = Completer<bool>();
-    final deadline = nowUs() + 15000000;
+    final deadline = nowUs() + window.inMicroseconds;
     var candidates = <String>[];
     var sweep = <String>[];
     for (var round = 0; !discovery.isCompleted && nowUs() < deadline; round++) {
@@ -469,6 +514,7 @@ class SessionEngine extends ChangeNotifier {
       if (round % 4 == 0) {
         candidates = await discoveryCandidates(info.hosts);
         sweep = await subnetSweepTargets();
+        trace('discover round $round: candidates=$candidates sweep=${sweep.length} port=${info.port}');
       }
       final join = _joinMsg().encode();
       for (final h in candidates) {
@@ -496,6 +542,10 @@ class SessionEngine extends ChangeNotifier {
       _parentAddress != null && d.address == _parentAddress && d.port == _parentPort;
 
   void _onUpstream(ReceivedDatagram d) {
+    final type = peekType(d.data);
+    if (type != MsgType.audio && type != MsgType.pong) {
+      trace('upstream rx $type from ${d.address.address}:${d.port} (${d.data.length}B)');
+    }
     switch (peekType(d.data)) {
       case MsgType.audio:
         _onAudio(d);
@@ -571,6 +621,11 @@ class SessionEngine extends ChangeNotifier {
     final pcm = packet.codec == AudioCodec.mulaw
         ? MuLaw.decode(packet.payload)
         : _pcm16(packet.payload);
+    _windowPushed++;
+    _lastLeadUs = packet.playAtHostUs - offset - nowUs();
+    for (final s in pcm) {
+      if (s.abs() > _windowPeak) _windowPeak = s.abs();
+    }
     audio.push(packet.firstSample, packet.playAtHostUs - offset, pcm);
   }
 
@@ -641,6 +696,14 @@ class SessionEngine extends ChangeNotifier {
       }
     }
     if (nowUs() - _windowStartUs > 5000000) {
+      trace('audio: rx=$_windowReceived lost=$_windowLost pushed=$_windowPushed '
+          'peak=$_windowPeak synced=${clock.isSynced} lead=${_lastLeadUs ~/ 1000}ms '
+          'buf=${playback.bufferedMs.round()}ms starved=${playback.starvedMs.round()}ms '
+          'lostMs=${playback.lostMs.round()} err=${playback.syncErrorMs.toStringAsFixed(1)}ms '
+          'resyncs=${playback.resyncs} latency=${playback.outputLatencyMs.round()}ms '
+          'route="${playback.route}" (${playback.routeKind})');
+      _windowPushed = 0;
+      _windowPeak = 0;
       final total = _windowLost + _windowReceived;
       lossPct = total == 0 ? 0 : _windowLost * 100 / total;
       _windowLost = 0;

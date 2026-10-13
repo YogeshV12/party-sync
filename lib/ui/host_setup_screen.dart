@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../app_scope.dart';
+import '../core/util.dart';
 import '../engine/session_engine.dart';
 import 'host_live_screen.dart';
 import 'widgets/common.dart';
@@ -63,6 +64,12 @@ class _HostSetupScreenState extends State<HostSetupScreen> {
     if (hotspot && _ssid.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Enter your hotspot name so people can join it.')));
+      return;
+    }
+    if (hotspot && !isValidWifiPassword(_password.text)) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Wi-Fi passwords are 8-63 characters. Re-check the password '
+              'shown in your hotspot settings.')));
       return;
     }
     scope.prefs

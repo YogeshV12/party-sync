@@ -6,6 +6,7 @@ import 'package:party_sync/core/clock_sync.dart';
 import 'package:party_sync/core/join_info.dart';
 import 'package:party_sync/core/mulaw.dart';
 import 'package:party_sync/core/protocol.dart';
+import 'package:party_sync/core/util.dart';
 
 void main() {
   group('MuLaw', () {
@@ -114,6 +115,20 @@ void main() {
         }
         last = mapped;
       }
+    });
+  });
+
+  group('isValidWifiPassword', () {
+    test('accepts open networks and 8-63 character passphrases', () {
+      expect(isValidWifiPassword(''), isTrue);
+      expect(isValidWifiPassword('12345678'), isTrue);
+      expect(isValidWifiPassword('a' * 63), isTrue);
+    });
+
+    test('rejects passphrases Android would refuse to join', () {
+      expect(isValidWifiPassword('abcde'), isFalse);
+      expect(isValidWifiPassword('1234567'), isFalse);
+      expect(isValidWifiPassword('a' * 64), isFalse);
     });
   });
 

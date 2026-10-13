@@ -65,6 +65,10 @@ class DownstreamServer {
 
   void _onDatagram(ReceivedDatagram d) {
     final key = '${d.address.address}:${d.port}';
+    final type = peekType(d.data);
+    if (type != MsgType.ping && type != MsgType.status) {
+      trace('server rx $type from $key (${d.data.length}B)');
+    }
     switch (peekType(d.data)) {
       case MsgType.join:
         final body = decodeJsonBody(d.data);
@@ -72,6 +76,7 @@ class DownstreamServer {
         final join = JoinMsg.fromJson(body);
         final reason = rejectReason(join);
         if (reason != null) {
+          trace('server rejected $key: $reason');
           endpoint.send(encodeJson(MsgType.reject, {'reason': reason}), d.address, d.port);
           return;
         }

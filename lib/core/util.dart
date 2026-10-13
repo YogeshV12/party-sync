@@ -1,6 +1,11 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show debugPrint;
+
+/// Connection diagnostics: `adb logcat -s flutter` (or `flutter logs`).
+void trace(String message) => debugPrint('[PS] $message');
+
 /// Wall-clock microseconds. This is the shared local timebase between Dart and
 /// the native audio engines (both read the same realtime clock).
 int nowUs() => DateTime.now().microsecondsSinceEpoch;
@@ -20,6 +25,11 @@ String randomPassword([int length = 10]) {
   return List.generate(length, (_) => alphabet[_random.nextInt(alphabet.length)])
       .join();
 }
+
+/// WPA2 passphrases are 8-63 characters (empty means an open network). Android
+/// rejects anything else outright, before the join sheet can appear.
+bool isValidWifiPassword(String password) =>
+    password.isEmpty || (password.length >= 8 && password.length <= 63);
 
 /// Wi-Fi Direct groups must be named "DIRECT-xy..." on Android.
 String groupNetworkName(String displayName) {

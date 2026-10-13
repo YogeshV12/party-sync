@@ -13,6 +13,7 @@ import android.net.wifi.p2p.WifiP2pManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import java.net.Inet4Address
 import java.net.NetworkInterface
 
@@ -26,6 +27,7 @@ import java.net.NetworkInterface
  *    like a normal hotspot, while staying connected upstream (relay mode).
  */
 class WifiController(private val context: Context) {
+    private fun trace(msg: String) = Log.i("PS", msg)
     private val main = Handler(Looper.getMainLooper())
     private val cm = context.getSystemService(ConnectivityManager::class.java)
     private val p2p: WifiP2pManager? = context.getSystemService(WifiP2pManager::class.java)
@@ -100,12 +102,18 @@ class WifiController(private val context: Context) {
         }
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
+                trace("join onAvailable $network")
                 joinedNetwork = network
                 finish(null)
             }
 
             override fun onUnavailable() {
-                finish("Couldn't join \"$ssid\". The request was cancelled or the network wasn't found.")
+                trace("join onUnavailable")
+                finish(
+                    "Couldn't find or join a Wi-Fi named \"$ssid\". The name must match exactly, " +
+                        "including capitals and apostrophes (an iPhone hotspot uses the phone's name). " +
+                        "If you're already connected to it, tap \"I'm already on the host's Wi-Fi\"."
+                )
             }
 
             override fun onLost(network: Network) {
@@ -139,7 +147,9 @@ class WifiController(private val context: Context) {
      * the default route, which reaches this phone's own Wi-Fi Direct clients.
      */
     fun bindProcessToWifi(): Boolean {
-        val network = joinedNetwork ?: anyWifiNetwork ?: return false
+        val network = joinedNetwork ?: anyWifiNetwork
+        trace("bindProcessToWifi joined=$joinedNetwork any=$anyWifiNetwork")
+        if (network == null) return false
         return cm.bindProcessToNetwork(network)
     }
 
@@ -163,7 +173,10 @@ class WifiController(private val context: Context) {
                 .setGroupOperatingBand(WifiP2pConfig.GROUP_OWNER_BAND_AUTO)
                 .build()
             manager.createGroup(channel, config, object : WifiP2pManager.ActionListener {
-                override fun onSuccess() = awaitGroupInfo(manager, channel, 0, done)
+                override fun onSuccess() {
+                    trace("createGroup onSuccess")
+                    awaitGroupInfo(manager, channel, 0, done)
+                }
                 override fun onFailure(reason: Int) = done(
                     null,
                     "Couldn't create the network (${p2pReason(reason)}). Make sure Wi-Fi " +
@@ -193,6 +206,7 @@ class WifiController(private val context: Context) {
         manager.requestGroupInfo(channel) { group ->
             if (group != null && group.isGroupOwner) {
                 val iface = group.`interface`
+                trace("group ready ssid=${group.networkName} iface=$iface ip=${ipv4Of(iface)} freq=${group.frequency}")
                 done(
                     mapOf(
                         "ssid" to group.networkName,

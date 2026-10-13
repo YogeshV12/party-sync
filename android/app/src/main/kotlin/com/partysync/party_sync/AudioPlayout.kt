@@ -54,8 +54,11 @@ class AudioPlayout(private val context: Context) {
                     .build()
             )
             .setTransferMode(AudioTrack.MODE_STREAM)
+            .setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY)
             .setBufferSizeInBytes(maxOf(minBuf, outRate / 25 * 2)) // at least 40 ms
             .build()
+        Log.i("PS", "track minBuf=$minBuf bufFrames=${t.bufferSizeInFrames} capFrames=${t.bufferCapacityInFrames} " +
+            "perf=${t.performanceMode} outRate=$outRate burst=${am.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER)}")
         track = t
         running = true
         thread = Thread({ loop(t, outRate) }, "ps-playout").also { it.start() }

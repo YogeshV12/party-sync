@@ -90,6 +90,16 @@ class ListenerScreen extends StatelessWidget {
           _OutputCard(engine: engine),
           const SizedBox(height: 12),
           _Stats(engine: engine),
+          if (engine.neededSyncDelayMs case final needed?) ...[
+            const SizedBox(height: 12),
+            InfoBanner(
+                '${engine.playback.route.isEmpty ? 'This speaker' : engine.playback.route} '
+                'takes ${engine.playback.outputLatencyMs.round()} ms to play audio, '
+                "more than the host's delay allows, so nothing can be heard. Ask the "
+                'host to raise "Speakers play behind the mic by" to $needed ms or more.',
+                warning: true,
+                icon: Icons.bluetooth_audio),
+          ],
           const SectionTitle('Speaker lag correction'),
           _OffsetCard(engine: engine, scope: scope),
           const SectionTitle('Share to more phones'),
