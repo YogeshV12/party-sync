@@ -145,7 +145,7 @@ class _JoinScreenState extends State<JoinScreen> {
             const SizedBox(height: 18),
             InfoBanner(
               caps.isIOS
-                  ? 'When prompted, tap "Join" to connect. Keep Party Sync running so the sound keeps playing!'
+                  ? 'When prompted, tap "Join" to connect. Keep CrowdMic running so the sound keeps playing!'
                   : 'When prompted, tap to accept the Wi-Fi connection and you’ll jump right into the party.',
               icon: Icons.lightbulb_outline,
             ),

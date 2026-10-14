@@ -72,8 +72,8 @@ class _QrPanelState extends State<QrPanel> {
             Text(
               _wifiCode
                   ? "Scan with your phone's Camera app to join the Wi-Fi first, then open "
-                      'Party Sync and tap "I\'m already on the same Wi-Fi".'
-                  : 'Scan with Party Sync → "Join the Sound". Connects to Wi-Fi '
+                      'CrowdMic and tap "I\'m already on the same Wi-Fi".'
+                  : 'Scan with CrowdMic → "Join the Sound". Connects to Wi-Fi '
                       'and syncs the sound automatically in one tap!',
               textAlign: TextAlign.center,
               style: TextStyle(color: scheme.onSurfaceVariant, height: 1.35),

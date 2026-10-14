@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Party Sync</string>
+	<string>CrowdMic</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Party Sync</string>
+	<string>CrowdMic</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -29,11 +29,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Party Sync uses the camera to scan the host’s QR code.</string>
+	<string>CrowdMic uses the camera to scan the host’s QR code.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Party Sync talks to the other phones on this Wi-Fi to send and receive the host’s voice.</string>
+	<string>CrowdMic talks to the other phones on this Wi-Fi to send and receive the host’s voice.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Party Sync uses the microphone when you are the mic, so your voice plays on everyone’s speakers.</string>
+	<string>CrowdMic uses the microphone when you are the mic, so your voice plays on everyone’s speakers.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

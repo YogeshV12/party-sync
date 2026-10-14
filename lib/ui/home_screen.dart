@@ -63,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Icon(Icons.graphic_eq, color: scheme.onPrimary, size: 30),
                 ),
                 const SizedBox(width: 14),
-                Text('Party Sync',
+                Text('CrowdMic',
                     style: Theme.of(context)
                         .textTheme
                         .headlineMedium

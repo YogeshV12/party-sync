@@ -178,7 +178,7 @@ class PartySyncPlugin : FlutterPlugin, ActivityAware,
                     KeepAliveService.start(
                         appContext,
                         call.argument<Boolean>("microphone") ?: false,
-                        call.argument<String>("text") ?: "Party Sync is running"
+                        call.argument<String>("text") ?: "CrowdMic is running"
                     )
                     result.success(null)
                 }

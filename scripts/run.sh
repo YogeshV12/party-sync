@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run Party Sync on a connected phone, emulator or simulator.
+# Run CrowdMic on a connected phone, emulator or simulator.
 #
 #   ./scripts/run.sh                  list devices and pick one
 #   ./scripts/run.sh <device-id>      run on that device (debug, hot reload)

@@ -40,7 +40,7 @@ class PartySyncApp extends StatelessWidget {
       engine: engine,
       prefs: prefs,
       child: MaterialApp(
-        title: 'Party Sync',
+        title: 'CrowdMic',
         debugShowCheckedModeBanner: false,
         theme: buildTheme(Brightness.light),
         darkTheme: buildTheme(Brightness.dark),

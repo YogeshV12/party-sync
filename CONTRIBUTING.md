@@ -1,4 +1,4 @@
-# Contributing to Party Sync
+# Contributing to CrowdMic
 
 ## Get running in 5 minutes
 

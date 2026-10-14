@@ -3,7 +3,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../core/join_info.dart';
 
-/// Scans a Party Sync app code or a standard Wi-Fi QR code.
+/// Scans a CrowdMic app code or a standard Wi-Fi QR code.
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
 
@@ -32,7 +32,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         return;
       }
     }
-    setState(() => _hint = "Not a Party Sync code. Scan the QR on your friend's screen!");
+    setState(() => _hint = "Not a CrowdMic code. Scan the QR on your friend's screen!");
   }
 
   @override
