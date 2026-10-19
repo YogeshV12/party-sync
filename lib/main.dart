@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app_scope.dart';
 import 'engine/session_engine.dart';
+import 'l10n/app_localizations.dart';
 import 'platform/audio_backend.dart';
 import 'platform/net_backend.dart';
 import 'ui/home_screen.dart';
@@ -40,8 +42,20 @@ class PartySyncApp extends StatelessWidget {
       engine: engine,
       prefs: prefs,
       child: MaterialApp(
-        title: 'CrowdMic',
+        title: 'Crowd Speaker',
         debugShowCheckedModeBanner: false,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        builder: (context, child) {
+          // The engine writes some of its own messages, so give it the strings.
+          engine.l10n = AppLocalizations.of(context);
+          return child!;
+        },
         theme: buildTheme(Brightness.light),
         darkTheme: buildTheme(Brightness.dark),
         home: const HomeScreen(),

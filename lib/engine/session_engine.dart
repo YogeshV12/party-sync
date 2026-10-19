@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
+import 'dart:ui' show Locale;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +12,7 @@ import '../core/join_info.dart';
 import '../core/mulaw.dart';
 import '../core/protocol.dart';
 import '../core/util.dart';
+import '../l10n/app_localizations.dart';
 import '../platform/audio_backend.dart';
 import '../platform/net_backend.dart';
 import 'downstream_server.dart';
@@ -48,10 +50,10 @@ class SessionError implements Exception {
   String toString() => message;
 }
 
-String describeError(Object e) => switch (e) {
+String describeError(Object e, AppLocalizations l10n) => switch (e) {
       SessionError(:final message) => message,
       PlatformException(:final message, :final code) => message ?? code,
-      SocketException(:final message) => 'Network error: $message',
+      SocketException(:final message) => l10n.errNetwork(message),
       _ => e.toString(),
     };
 
@@ -89,10 +91,15 @@ class SessionEngine extends ChangeNotifier {
   String displayName = 'Phone';
   DeviceCaps caps = DeviceCaps.unknown;
 
+  /// Strings for messages the engine shows the user (errors, notices). The app
+  /// keeps this in step with the device language; English until it does.
+  AppLocalizations l10n = lookupAppLocalizations(const Locale('en'));
+
   SessionRole? role;
   SessionPhase phase = SessionPhase.idle;
   String? error;
   String? notice;
+  bool _hotspotNoticeShown = false;
 
   int sessionId = 0;
   String sessionName = '';
@@ -209,11 +216,10 @@ class SessionEngine extends ChangeNotifier {
       });
       trace('host start mode=$mode perms=$perms');
       if (perms[AppPermission.microphone] != true) {
-        throw const SessionError('Microphone access is needed to be the mic.');
+        throw SessionError(l10n.errMicNeeded);
       }
       if (mode == HostNetworkMode.appNetwork && perms[AppPermission.wifi] != true) {
-        throw const SessionError(
-            'Allow "Nearby devices" so the app can create a network.');
+        throw SessionError(l10n.errNearbyCreate);
       }
 
       var join = JoinInfo(
@@ -252,7 +258,7 @@ class SessionEngine extends ChangeNotifier {
         frameSamples: SessionConfig.frameSamples,
         voiceProcessing: voiceProcessing,
       );
-      await net.startKeepAlive(microphone: true, text: 'Hosting "$name"');
+      await net.startKeepAlive(microphone: true, text: l10n.notifHosting(name));
       if (gen != _generation) return;
 
       _every(const Duration(seconds: 3), _broadcastNetmap);
@@ -367,9 +373,11 @@ class SessionEngine extends ChangeNotifier {
   void _updateHotspotNotice() {
     final join = hostJoin;
     if (hostMode == HostNetworkMode.phoneHotspot && join != null && join.hosts.isEmpty) {
-      notice = "Your hotspot isn't on yet. Turn it on and the QR code updates by itself.";
-    } else if (notice?.startsWith('Your hotspot') ?? false) {
+      notice = l10n.noticeHotspotOff;
+      _hotspotNoticeShown = true;
+    } else if (_hotspotNoticeShown) {
       notice = null;
+      _hotspotNoticeShown = false;
     }
   }
 
@@ -412,7 +420,7 @@ class SessionEngine extends ChangeNotifier {
       await _connectUpstream(info,
           joinWifi: !alreadyOnWifi && info.ssid.isNotEmpty, gen: gen);
       if (gen != _generation) return;
-      await net.startKeepAlive(microphone: false, text: 'Playing "$sessionName"');
+      await net.startKeepAlive(microphone: false, text: l10n.notifPlaying(sessionName));
       _windowStartUs = nowUs();
       _every(const Duration(milliseconds: 500), _pollPlayback);
       _every(const Duration(seconds: 1), _listenerTick);
@@ -459,7 +467,7 @@ class SessionEngine extends ChangeNotifier {
     } catch (e) {
       if (gen != _generation) return;
       phase = SessionPhase.reconnecting;
-      notice = describeError(e);
+      notice = describeError(e, l10n);
     }
     _notify();
   }
@@ -468,11 +476,7 @@ class SessionEngine extends ChangeNotifier {
       {required bool joinWifi, required int gen}) async {
     if (joinWifi) {
       if (!isValidWifiPassword(info.password)) {
-        throw SessionError(
-            'The Wi-Fi password in this code is ${info.password.length} characters, '
-            'but Wi-Fi passwords are 8-63. The host probably mistyped it: ask them '
-            'to re-enter it, or join "${info.ssid}" in your Wi-Fi settings and tap '
-            '"I\'m already on the host\'s Wi-Fi".');
+        throw SessionError(l10n.errPasswordLength(info.password.length, info.ssid));
       }
       // Already on the host's Wi-Fi (joined by hand in Settings)? Then there is
       // nothing to join, and asking the OS for a network by name could fail.
@@ -495,9 +499,7 @@ class SessionEngine extends ChangeNotifier {
 
     if (!await _discoverUpstream(info, gen)) {
       if (gen != _generation) return;
-      throw const SessionError(
-          "Couldn't find the host on this Wi-Fi. Check the host is live and "
-          'that you joined the right network.');
+      throw SessionError(l10n.errHostNotFound);
     }
   }
 
@@ -685,7 +687,11 @@ class SessionEngine extends ChangeNotifier {
     if (reason == 'rejoin' && _fromParent(d)) {
       _sendToParent(_joinMsg().encode());
     } else if (reason != 'self' && _discovery != null) {
-      notice = 'Found a phone that said: $reason';
+      notice = switch (reason) {
+        'relay is still syncing' => l10n.noticeRejectSyncing,
+        'loop' => l10n.noticeRejectLoop,
+        _ => l10n.noticeRejectOther(reason),
+      };
       _scheduleNotify();
     }
   }
@@ -742,8 +748,9 @@ class SessionEngine extends ChangeNotifier {
         _parentAddress != null &&
         silentUs > SessionConfig.lostAfterUs) {
       phase = SessionPhase.reconnecting;
-      notice = 'Lost ${parentName.isEmpty ? 'the host' : parentName}. '
-          'Trying again, or pick another network below.';
+      notice = parentName.isEmpty
+          ? l10n.noticeLostHost
+          : l10n.noticeLostParent(parentName);
       _notify();
     } else if (phase == SessionPhase.reconnecting && _parentAddress != null) {
       if (silentUs < 1500000) {
@@ -815,17 +822,14 @@ class SessionEngine extends ChangeNotifier {
     try {
       if (enable) {
         if (!caps.canRelay) {
-          throw const SessionError(
-              'Sharing needs an Android phone with Wi-Fi Direct.');
+          throw SessionError(l10n.errRelayNeedsAndroid);
         }
         if (depth >= maxDepth) {
-          throw SessionError('This phone is $depth hops from the host (max '
-              '$maxDepth). Join a network closer to the host to share.');
+          throw SessionError(l10n.errTooDeep(depth, maxDepth));
         }
         final perms = await net.requestPermissions({AppPermission.wifi});
         if (perms[AppPermission.wifi] != true) {
-          throw const SessionError(
-              'Allow "Nearby devices" so the app can share a network.');
+          throw SessionError(l10n.errNearbyShare);
         }
         final hosted = await net.createNetwork(
             name: groupNetworkName(displayName), password: randomPassword());
@@ -854,7 +858,7 @@ class SessionEngine extends ChangeNotifier {
         await _stopRelay();
       }
     } catch (e) {
-      relayError = describeError(e);
+      relayError = describeError(e, l10n);
       await _stopRelay();
     } finally {
       relayBusy = false;
@@ -942,6 +946,7 @@ class SessionEngine extends ChangeNotifier {
     phase = SessionPhase.idle;
     error = null;
     notice = null;
+    _hotspotNoticeShown = false;
     hostMode = null;
     hostJoin = null;
     upstreamJoin = null;
@@ -953,7 +958,7 @@ class SessionEngine extends ChangeNotifier {
   }
 
   Future<void> _fail(Object e) async {
-    final message = describeError(e);
+    final message = describeError(e, l10n);
     await _teardown();
     error = message;
     phase = SessionPhase.error;

@@ -1,0 +1,284 @@
+{
+  "@@locale": "en",
+
+  "homeTagline": "Turn your squad's phones into one massive sound system. 🔊 One phone grabs the mic, and every phone (plus any Bluetooth speaker hooked up) pumps the sound in sync.",
+  "nameLabel": "Your name or nickname",
+  "nameHelper": "What the squad sees on their screen",
+  "homeVibeTitle": "What's the vibe?",
+  "hostCardTitle": "Grab the Mic 🎤",
+  "hostCardSubtitle": "Host the party. Whatever you say or stream plays in real-time through everyone's speakers.",
+  "joinCardTitle": "Join the Sound 🔊",
+  "joinCardSubtitle": "Scan the host's QR code. Turn this phone or your Bluetooth speaker into part of the party.",
+  "homeTipRelay": "Pro tip: This phone can boost range! Once you are connected, you can share the vibe with even more friends nearby.",
+  "homeTipIos": "iPhones can host or join as speakers. To boost signal range for friends further away, use an Android phone.",
+  "homeTipDefault": "Ready to host the party or join the sound!",
+
+  "scanHostQr": "Scan Host QR Code",
+  "scanHostQrSubtitle": "One-tap connect: links to Wi-Fi and syncs the sound automatically",
+  "alreadyOnWifi": "I'm already on the same Wi-Fi",
+  "connectManually": "Connect manually",
+  "wifiNameLabel": "Wi-Fi name",
+  "wifiPasswordLabel": "Wi-Fi password",
+  "hostIpLabel": "Host IP address (optional)",
+  "hostIpHelper": "Found under the host’s QR code",
+  "connectToParty": "Connect to Party",
+  "enterWifiName": "Please enter the Wi-Fi name.",
+  "joinTipIos": "When prompted, tap \"Join\" to connect. Keep Crowd Speaker running so the sound keeps playing!",
+  "joinTipAndroid": "When prompted, tap to accept the Wi-Fi connection and you’ll jump right into the party.",
+
+  "scannerNotACode": "Not a Crowd Speaker code. Scan the QR on your friend's screen!",
+  "scannerHint": "Point your camera at the QR code on your friend's screen.",
+
+  "hostSetupTitle": "Host the Party 🎤",
+  "partyNameLabel": "Party name",
+  "partyNameHelper": "What friends will see when they join",
+  "partyNameDefault": "{name}'s party",
+  "@partyNameDefault": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "defaultPartyName": "Party",
+  "connectQuestion": "How should friends connect?",
+  "instantNetworkTitle": "Instant Party Network",
+  "badgeEasiest": "Easiest",
+  "instantNetworkSubtitle": "Zero setup needed. Creates an instant local bubble for everyone to tap in. (No internet needed).",
+  "usePersonalHotspot": "Use Personal Hotspot",
+  "useMyHotspot": "Use my phone hotspot",
+  "hotspotSubtitle": "Turn on your phone's hotspot manually. Also lets friends share your mobile internet.",
+  "hotspotInfoIos": "Turn on Personal Hotspot in Settings (\"Allow Others to Join\"), then enter your iPhone name & hotspot password below so friends can join.",
+  "hotspotInfoAndroid": "Turn on your hotspot in Settings, then enter your Wi-Fi name and password below so friends can join.",
+  "openHotspotSettings": "Open hotspot settings",
+  "hotspotSettingsHint": "Open Settings → Personal Hotspot and turn on \"Allow Others to Join\".",
+  "hotspotWifiNameLabel": "Hotspot Wi-Fi name",
+  "hotspotPasswordLabel": "Hotspot password",
+  "enterHotspotName": "Enter your hotspot name so friends can join.",
+  "invalidWifiPassword": "Wi-Fi passwords must be 8–63 characters. Check your hotspot settings and try again!",
+  "audioTuning": "Audio Tuning",
+  "filterNoiseTitle": "Filter background noise",
+  "filterNoiseSubtitle": "Keeps voices crisp. Toggle off if you are blasting music or using DJ gear.",
+  "startParty": "Start the Party 🔥",
+
+  "onTheMic": "On the Mic 🎤",
+  "endParty": "End Party",
+  "endPartyTitle": "End the party?",
+  "endPartyMessage": "This will disconnect all speakers and stop the sound.",
+  "somethingWentWrong": "Something went wrong.",
+  "firingUpParty": "Firing up the party…",
+  "creatingPartyNetwork": "Creating your party network",
+  "scanToJoinSound": "Scan to join the sound 📲",
+  "syncBufferTitle": "Sound sync buffer",
+  "squadSpeakers": "Squad speakers · {count, plural, one{{count} phone connected} other{{count} phones connected}}",
+  "@squadSpeakers": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "micMuted": "Mic Muted 🤫",
+  "liveOnAir": "Live on Air 🎙️",
+  "tapToUnmute": "Tap the mic to unmute and drop back in",
+  "waitingForSquad": "Waiting for the squad to scan and join…",
+  "streamingTo": "Streaming live to {count, plural, one{{count} phone speaker} other{{count} phone speakers}}",
+  "@streamingTo": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "bufferDelayLabel": "Buffer delay before sound plays",
+  "syncBufferHelp": "Slide up if audio stutters or drops out. Bluetooth speakers and signal boosters need a bit more buffer time to stay perfectly in sync.",
+
+  "speakerMode": "Speaker Mode 🔊",
+  "leave": "Leave",
+  "leavePartyTitle": "Leave the party?",
+  "leavePartyBoosterMessage": "Friends connected through your booster will disconnect too.",
+  "leavePartyMessage": "This phone will stop playing sound.",
+  "leaveParty": "Leave Party",
+  "audioOutput": "Audio output",
+  "thisSpeaker": "This speaker",
+  "bluetoothLagWarning": "{route} has high Bluetooth lag ({latency} ms), longer than the host's sync buffer. Ask the host to raise \"Sound sync buffer\" to {needed} ms or more so your sound can play!",
+  "@bluetoothLagWarning": {
+    "placeholders": {
+      "route": { "type": "String" },
+      "latency": { "type": "int" },
+      "needed": { "type": "int" }
+    }
+  },
+  "echoFixTitle": "Echo fix (fine-tune sync)",
+  "boostRangeTitle": "Boost range for friends 📡",
+
+  "partyWrappedUp": "The party has wrapped up 🎉",
+  "hostEndedParty": "The host ended the party.",
+  "partyEndedByHost": "\"{name}\" was ended by the host.",
+  "@partyEndedByHost": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "backToHome": "Back to Home",
+  "joinAnotherParty": "Join another party",
+
+  "tuningIn": "Tuning in…",
+  "warmingUpSpeakers": "Warming up the speakers",
+  "connectingToWifi": "Connecting to {ssid}…",
+  "@connectingToWifi": {
+    "placeholders": { "ssid": { "type": "String" } }
+  },
+  "partyWifi": "party Wi-Fi",
+  "tapAllowToConnect": "Tap Allow on the pop-up to connect.",
+  "findingHost": "Finding the host…",
+  "searchingParty": "Searching for the party on this Wi-Fi.",
+  "lockingIntoSync": "Locking into sync…",
+  "aligningBeat": "Aligning beat timing.",
+  "hostIsMuted": "Host is muted 🤫",
+  "hostMutedSubtitle": "Connected! Sound will drop back in when they unmute.",
+  "bumpingInSync": "Bumping in Sync 🔥",
+  "linkedDirectlyTo": "Directly linked to {name}",
+  "@linkedDirectlyTo": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "hostFallback": "host",
+  "syncedVia": "Synced via {name} (hops from mic: {depth})",
+  "@syncedVia": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "depth": { "type": "int" }
+    }
+  },
+  "boosterFallback": "booster",
+  "reSyncing": "Re-syncing…",
+  "reconnectingStream": "Reconnecting to the stream",
+  "notConnectedYet": "Not connected yet",
+
+  "phoneSpeaker": "Phone speaker",
+  "bluetoothDelayZeroed": "Bluetooth delay (+{ms} ms) automatically zeroed out.",
+  "@bluetoothDelayZeroed": {
+    "placeholders": { "ms": { "type": "int" } }
+  },
+  "speakerDelayCalibrated": "Speaker delay (+{ms} ms) automatically calibrated.",
+  "@speakerDelayCalibrated": {
+    "placeholders": { "ms": { "type": "int" } }
+  },
+  "syncTiming": "Sync timing",
+  "audioBuffer": "Audio buffer",
+  "streamDrops": "Stream drops",
+  "autoAdjust": "Auto-adjust",
+
+  "defaultSyncZero": "Default sync (Zero offset)",
+  "nudgedEarlier": "Nudged {ms} ms earlier",
+  "@nudgedEarlier": {
+    "placeholders": { "ms": { "type": "int" } }
+  },
+  "nudgedLater": "Nudged {ms} ms later",
+  "@nudgedLater": {
+    "placeholders": { "ms": { "type": "int" } }
+  },
+  "reset": "Reset",
+  "echoHelp": "Hearing an echo? If this speaker sounds behind the squad, slide right. If it sounds ahead, slide left. (Most speakers already sound perfect without this!)",
+
+  "relayUnsupportedIos": "iPhones can't share Wi-Fi while listening. Have an Android friend turn on signal booster instead!",
+  "relayUnsupportedAndroid": "This phone doesn't support Wi-Fi Direct booster mode.",
+  "boostSignalTitle": "Boost signal for friends",
+  "tooFarToBoost": "Too far from host to boost range further (hops from host: {depth}).",
+  "@tooFarToBoost": {
+    "placeholders": { "depth": { "type": "int" } }
+  },
+  "boostingFor": "Boosting sound for {count, plural, one{{count} friend} other{{count} friends}}",
+  "@boostingFor": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "boostSubtitleOff": "Turns your phone into a Wi-Fi booster so friends further away can connect.",
+  "chargerTip": "Plug into a charger if possible: boosting range uses extra battery.",
+  "scanToConnectBooster": "Scan to connect through booster 📲",
+
+  "reconnectSameNetwork": "Reconnect to same network",
+  "retry": "Retry",
+  "switchLabel": "Switch",
+  "hostLabel": "{name} (host 🎤)",
+  "@hostLabel": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "boosterLabel": "{name} (booster 📡)",
+  "@boosterLabel": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "inSyncCount": "{ssid} · in sync: {count}",
+  "@inSyncCount": {
+    "placeholders": {
+      "ssid": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+
+  "tryAgain": "Try again",
+  "back": "Back",
+  "cancel": "Cancel",
+  "copy": "Copy",
+  "show": "Show",
+  "hide": "Hide",
+  "copied": "{label} copied",
+  "@copied": {
+    "placeholders": { "label": { "type": "String" } }
+  },
+  "labelWifi": "Wi-Fi",
+  "labelPassword": "Password",
+  "labelAddress": "Address",
+  "partyCode": "Party code",
+  "cameraQr": "Camera QR",
+  "settingUpNetwork": "Setting up party network…",
+  "qrCameraHelp": "Scan with your phone's Camera app to join the Wi-Fi first, then open Crowd Speaker and tap \"I'm already on the same Wi-Fi\".",
+  "qrAppHelp": "Scan with Crowd Speaker → \"Join the Sound\". Connects to Wi-Fi and syncs the sound automatically in one tap!",
+
+  "noSpeakersYet": "No speakers yet. Have the squad scan your QR code to turn up!",
+  "youLabel": "{name} (you 🎤)",
+  "@youLabel": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "boosterDetail": "Booster 📡 · synced: {count}",
+  "@boosterDetail": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "bufferDetail": "{ms} ms buffer",
+  "@bufferDetail": {
+    "placeholders": { "ms": { "type": "int" } }
+  },
+  "dropsDetail": "{pct}% drops",
+  "@dropsDetail": {
+    "placeholders": { "pct": { "type": "String" } }
+  },
+
+  "errMicNeeded": "Microphone access is needed to be the mic.",
+  "errNearbyCreate": "Allow \"Nearby devices\" so the app can create a network.",
+  "errNearbyShare": "Allow \"Nearby devices\" so the app can share a network.",
+  "errNetwork": "Network error: {message}",
+  "@errNetwork": {
+    "placeholders": { "message": { "type": "String" } }
+  },
+  "noticeHotspotOff": "Your hotspot isn't on yet. Turn it on and the QR code updates by itself.",
+  "noticeLostHost": "Lost the host. Trying again, or pick another network below.",
+  "noticeLostParent": "Lost {name}. Trying again, or pick another network below.",
+  "@noticeLostParent": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "noticeRejectSyncing": "Found a booster phone, but it is still syncing. Try again in a moment.",
+  "noticeRejectLoop": "That phone is already connected through you, so it can't be your source.",
+  "noticeRejectOther": "Found a phone that said: {reason}",
+  "@noticeRejectOther": {
+    "placeholders": { "reason": { "type": "String" } }
+  },
+  "errPasswordLength": "The Wi-Fi password in this code is {length} characters, but Wi-Fi passwords are 8-63. The host probably mistyped it: ask them to re-enter it, or join \"{ssid}\" in your Wi-Fi settings and tap \"I'm already on the same Wi-Fi\".",
+  "@errPasswordLength": {
+    "placeholders": {
+      "length": { "type": "int" },
+      "ssid": { "type": "String" }
+    }
+  },
+  "errHostNotFound": "Couldn't find the host on this Wi-Fi. Check the host is live and that you joined the right network.",
+  "errRelayNeedsAndroid": "Sharing needs an Android phone with Wi-Fi Direct.",
+  "errTooDeep": "This phone is too far from the host (hops from host: {depth}, max {max}). Join a network closer to the host to share.",
+  "@errTooDeep": {
+    "placeholders": {
+      "depth": { "type": "int" },
+      "max": { "type": "int" }
+    }
+  },
+  "notifHosting": "Hosting \"{name}\"",
+  "@notifHosting": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "notifPlaying": "Playing \"{name}\"",
+  "@notifPlaying": {
+    "placeholders": { "name": { "type": "String" } }
+  }
+}

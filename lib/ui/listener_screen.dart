@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app_scope.dart';
 import '../core/protocol.dart';
 import '../engine/session_engine.dart';
+import '../l10n/app_localizations.dart';
 import 'join_screen.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
@@ -13,13 +14,14 @@ class ListenerScreen extends StatelessWidget {
 
   Future<void> _leave(BuildContext context) async {
     final engine = AppScope.of(context).engine;
+    final l10n = AppLocalizations.of(context);
     final ok = engine.phase != SessionPhase.live ||
         await confirm(context,
-            title: 'Leave the party?',
+            title: l10n.leavePartyTitle,
             message: engine.relaying
-                ? 'Friends connected through your booster will disconnect too.'
-                : 'This phone will stop playing sound.',
-            action: 'Leave Party');
+                ? l10n.leavePartyBoosterMessage
+                : l10n.leavePartyMessage,
+            action: l10n.leaveParty);
     if (!ok || !context.mounted) return;
     await engine.stop();
     if (context.mounted) Navigator.pop(context);
@@ -29,6 +31,7 @@ class ListenerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final scope = AppScope.of(context);
     final engine = scope.engine;
+    final l10n = AppLocalizations.of(context);
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -38,12 +41,12 @@ class ListenerScreen extends StatelessWidget {
         listenable: engine,
         builder: (context, _) => Scaffold(
           appBar: AppBar(
-            title: Text(engine.sessionName.isEmpty ? 'Speaker Mode 🔊' : engine.sessionName),
+            title: Text(engine.sessionName.isEmpty ? l10n.speakerMode : engine.sessionName),
             actions: [
               TextButton.icon(
                 onPressed: () => _leave(context),
                 icon: const Icon(Icons.logout),
-                label: const Text('Leave'),
+                label: Text(l10n.leave),
               ),
             ],
           ),
@@ -55,9 +58,10 @@ class ListenerScreen extends StatelessWidget {
 
   Widget _body(BuildContext context, AppScope scope) {
     final engine = scope.engine;
+    final l10n = AppLocalizations.of(context);
     if (engine.phase == SessionPhase.error) {
       return ErrorView(
-        message: engine.error ?? 'Something went wrong.',
+        message: engine.error ?? l10n.somethingWentWrong,
         onRetry: () {
           final info = engine.upstreamJoin;
           if (info != null) engine.joinSession(info, alreadyOnWifi: info.ssid.isEmpty);
@@ -97,23 +101,25 @@ class ListenerScreen extends StatelessWidget {
           _Alternatives(engine: engine),
         ],
         if (connected) ...[
-          const SectionTitle('Audio output'),
+          SectionTitle(l10n.audioOutput),
           _OutputCard(engine: engine),
           const SizedBox(height: 12),
           _Stats(engine: engine),
           if (engine.neededSyncDelayMs case final needed?) ...[
             const SizedBox(height: 12),
             InfoBanner(
-                '${engine.playback.route.isEmpty ? 'This speaker' : engine.playback.route} '
-                'has high Bluetooth lag (${engine.playback.outputLatencyMs.round()} ms), '
-                "longer than the host's sync buffer. Ask the host to raise "
-                '"Sound sync buffer" to $needed ms or more so your sound can play!',
+                l10n.bluetoothLagWarning(
+                    engine.playback.route.isEmpty
+                        ? l10n.thisSpeaker
+                        : engine.playback.route,
+                    engine.playback.outputLatencyMs.round(),
+                    needed),
                 warning: true,
                 icon: Icons.bluetooth_audio),
           ],
-          const SectionTitle('Echo fix (fine-tune sync)'),
+          SectionTitle(l10n.echoFixTitle),
           _OffsetCard(engine: engine, scope: scope),
-          const SectionTitle('Boost range for friends 📡'),
+          SectionTitle(l10n.boostRangeTitle),
           _RelayCard(engine: engine),
         ],
       ],
@@ -134,6 +140,7 @@ class _EndedView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -142,22 +149,20 @@ class _EndedView extends StatelessWidget {
           children: [
             Icon(Icons.stop_circle_outlined, size: 56, color: scheme.onSurfaceVariant),
             const SizedBox(height: 16),
-            Text('The party has wrapped up 🎉',
+            Text(l10n.partyWrappedUp,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
             Text(
-              name.isEmpty
-                  ? 'The host ended the party.'
-                  : '"$name" was ended by the host.',
+              name.isEmpty ? l10n.hostEndedParty : l10n.partyEndedByHost(name),
               textAlign: TextAlign.center,
               style: TextStyle(color: scheme.onSurfaceVariant),
             ),
             const SizedBox(height: 24),
-            FilledButton(onPressed: onDone, child: const Text('Back to Home')),
+            FilledButton(onPressed: onDone, child: Text(l10n.backToHome)),
             const SizedBox(height: 10),
             OutlinedButton(
-                onPressed: onJoinAnother, child: const Text('Join another party')),
+                onPressed: onJoinAnother, child: Text(l10n.joinAnotherParty)),
           ],
         ),
       ),
@@ -172,38 +177,42 @@ class _StatusHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     final ssid = engine.upstreamJoin?.ssid ?? '';
     final (IconData icon, String title, String subtitle, bool busy) = switch (engine.phase) {
-      SessionPhase.starting => (Icons.hourglass_top, 'Tuning in…', 'Warming up the speakers', true),
+      SessionPhase.starting => (Icons.hourglass_top, l10n.tuningIn, l10n.warmingUpSpeakers, true),
       SessionPhase.joiningWifi => (
           Icons.wifi,
-          'Connecting to ${ssid.isEmpty ? 'party Wi-Fi' : ssid}…',
-          'Tap Allow on the pop-up to connect.',
+          l10n.connectingToWifi(ssid.isEmpty ? l10n.partyWifi : ssid),
+          l10n.tapAllowToConnect,
           true
         ),
       SessionPhase.discovering => (
           Icons.travel_explore,
-          'Finding the host…',
-          'Searching for the party on this Wi-Fi.',
+          l10n.findingHost,
+          l10n.searchingParty,
           true
         ),
-      SessionPhase.syncing => (Icons.timer_outlined, 'Locking into sync…', 'Aligning beat timing.', true),
+      SessionPhase.syncing => (Icons.timer_outlined, l10n.lockingIntoSync, l10n.aligningBeat, true),
       SessionPhase.live when engine.hostMuted => (
           Icons.mic_off,
-          'Host is muted 🤫',
-          'Connected! Sound will drop back in when they unmute.',
+          l10n.hostIsMuted,
+          l10n.hostMutedSubtitle,
           false
         ),
       SessionPhase.live => (
           Icons.graphic_eq,
-          'Bumping in Sync 🔥',
+          l10n.bumpingInSync,
           engine.depth <= 1
-              ? 'Directly linked to ${engine.parentName.isEmpty ? 'host' : engine.parentName}'
-              : 'Synced via ${engine.parentName.isEmpty ? 'booster' : engine.parentName} (${engine.depth} hops from mic)',
+              ? l10n.linkedDirectlyTo(
+                  engine.parentName.isEmpty ? l10n.hostFallback : engine.parentName)
+              : l10n.syncedVia(
+                  engine.parentName.isEmpty ? l10n.boosterFallback : engine.parentName,
+                  engine.depth),
           false
         ),
-      SessionPhase.reconnecting => (Icons.sync_problem, 'Re-syncing…', 'Reconnecting to the stream', true),
-      _ => (Icons.speaker, 'Not connected yet', '', false),
+      SessionPhase.reconnecting => (Icons.sync_problem, l10n.reSyncing, l10n.reconnectingStream, true),
+      _ => (Icons.speaker, l10n.notConnectedYet, '', false),
     };
     final live = engine.phase == SessionPhase.live;
     return Card(
@@ -254,6 +263,7 @@ class _OutputCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     final p = engine.playback;
     final icon = switch (p.routeKind) {
       String k when k.startsWith('bluetooth') => Icons.bluetooth_audio,
@@ -269,11 +279,11 @@ class _OutputCard extends StatelessWidget {
           backgroundColor: scheme.secondaryContainer,
           child: Icon(icon, color: scheme.onSecondaryContainer),
         ),
-        title: Text(p.route.isEmpty ? 'Phone speaker' : p.route,
+        title: Text(p.route.isEmpty ? l10n.phoneSpeaker : p.route,
             style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(p.isBluetooth
-            ? 'Bluetooth delay (+${p.outputLatencyMs.round()} ms) automatically zeroed out.'
-            : 'Speaker delay (+${p.outputLatencyMs.round()} ms) automatically calibrated.'),
+            ? l10n.bluetoothDelayZeroed(p.outputLatencyMs.round())
+            : l10n.speakerDelayCalibrated(p.outputLatencyMs.round())),
       ),
     );
   }
@@ -286,6 +296,7 @@ class _Stats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     final p = engine.playback;
     final syncMs = engine.clock.errorBoundMs;
     return GridView.count(
@@ -297,25 +308,25 @@ class _Stats extends StatelessWidget {
       childAspectRatio: 2.3,
       children: [
         StatTile(
-          label: 'Sync timing',
+          label: l10n.syncTiming,
           value: syncMs == null ? '…' : '±${syncMs.toStringAsFixed(1)} ms',
           color: syncMs == null
               ? null
               : healthColor(scheme, syncMs < 3 ? 1 : (syncMs < 10 ? 0.5 : 0)),
         ),
         StatTile(
-          label: 'Audio buffer',
+          label: l10n.audioBuffer,
           value: engine.hostMuted ? '—' : '${p.bufferedMs.round()} ms',
           color: engine.hostMuted ? null : healthColor(scheme, bufferHealth(p.bufferedMs)),
         ),
         StatTile(
-          label: 'Stream drops',
+          label: l10n.streamDrops,
           value: '${engine.lossPct.toStringAsFixed(1)}%',
           color: healthColor(
               scheme, engine.lossPct < 1 ? 1 : (engine.lossPct < 5 ? 0.5 : 0)),
         ),
         StatTile(
-          label: 'Auto-adjust',
+          label: l10n.autoAdjust,
           value: '${p.syncErrorMs.abs().toStringAsFixed(1)} ms',
         ),
       ],
@@ -331,6 +342,7 @@ class _OffsetCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     final ms = engine.outputOffsetMs;
     return Card(
       child: Padding(
@@ -343,10 +355,10 @@ class _OffsetCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     ms == 0
-                        ? 'Default sync (Zero offset)'
+                        ? l10n.defaultSyncZero
                         : ms > 0
-                            ? 'Nudged ${ms.round()} ms earlier'
-                            : 'Nudged ${(-ms).round()} ms later',
+                            ? l10n.nudgedEarlier(ms.round())
+                            : l10n.nudgedLater((-ms).round()),
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -356,7 +368,7 @@ class _OffsetCard extends StatelessWidget {
                       engine.setOutputOffset(0);
                       scope.prefs.outputOffsetMs = 0;
                     },
-                    child: const Text('Reset'),
+                    child: Text(l10n.reset),
                   ),
               ],
             ),
@@ -370,8 +382,7 @@ class _OffsetCard extends StatelessWidget {
               onChangeEnd: (v) => scope.prefs.outputOffsetMs = v.roundToDouble(),
             ),
             Text(
-              'Hearing an echo? If this speaker sounds behind the squad, slide right. '
-              'If it sounds ahead, slide left. (Most speakers already sound perfect without this!)',
+              l10n.echoHelp,
               style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13, height: 1.35),
             ),
           ],
@@ -388,12 +399,10 @@ class _RelayCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     if (!engine.caps.canRelay) {
       return InfoBanner(
-        engine.caps.isIOS
-            ? "iPhones can't share Wi-Fi while listening. "
-                'Have an Android friend turn on signal booster instead!'
-            : "This phone doesn't support Wi-Fi Direct booster mode.",
+        engine.caps.isIOS ? l10n.relayUnsupportedIos : l10n.relayUnsupportedAndroid,
         icon: Icons.wifi_tethering_off,
       );
     }
@@ -412,13 +421,12 @@ class _RelayCard extends StatelessWidget {
                     width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.5))
                 : Icon(Icons.wifi_tethering,
                     color: engine.relaying ? scheme.primary : null),
-            title: const Text('Boost signal for friends'),
+            title: Text(l10n.boostSignalTitle),
             subtitle: Text(tooDeep
-                ? 'Too far from host to boost range further (${engine.depth} hops).'
+                ? l10n.tooFarToBoost(engine.depth)
                 : engine.relaying
-                    ? 'Boosting sound for ${engine.childCount} '
-                        '${engine.childCount == 1 ? 'friend' : 'friends'}'
-                    : 'Turns your phone into a Wi-Fi booster so friends further away can connect.'),
+                    ? l10n.boostingFor(engine.childCount)
+                    : l10n.boostSubtitleOff),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           ),
         ),
@@ -428,12 +436,12 @@ class _RelayCard extends StatelessWidget {
         ],
         if (engine.relaying && join != null) ...[
           const SizedBox(height: 12),
-          const InfoBanner(
-            'Plug into a charger if possible: boosting range uses extra battery.',
+          InfoBanner(
+            l10n.chargerTip,
             icon: Icons.battery_charging_full,
           ),
           const SizedBox(height: 12),
-          QrPanel(join: join, title: 'Scan to connect through booster 📲'),
+          QrPanel(join: join, title: l10n.scanToConnectBooster),
         ],
       ],
     );
@@ -446,6 +454,7 @@ class _Alternatives extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final entries = [...engine.alternatives]
       ..sort((a, b) => a.depth != b.depth
           ? a.depth.compareTo(b.depth)
@@ -460,22 +469,22 @@ class _Alternatives extends StatelessWidget {
           children: [
             ListTile(
               leading: const Icon(Icons.refresh),
-              title: const Text('Reconnect to same network'),
+              title: Text(l10n.reconnectSameNetwork),
               trailing: FilledButton.tonal(
                 style: FilledButton.styleFrom(minimumSize: compact),
                 onPressed: engine.retryConnection,
-                child: const Text('Retry'),
+                child: Text(l10n.retry),
               ),
             ),
             for (final EntryPoint e in entries)
               ListTile(
                 leading: Icon(e.isHost ? Icons.mic : Icons.wifi_tethering),
-                title: Text(e.isHost ? '${e.name} (host 🎤)' : '${e.name} (booster 📡)'),
-                subtitle: Text('${e.ssid} · ${e.children} in sync'),
+                title: Text(e.isHost ? l10n.hostLabel(e.name) : l10n.boosterLabel(e.name)),
+                subtitle: Text(l10n.inSyncCount(e.ssid, e.children)),
                 trailing: FilledButton(
                   style: FilledButton.styleFrom(minimumSize: compact),
                   onPressed: () => engine.switchTo(e),
-                  child: const Text('Switch'),
+                  child: Text(l10n.switchLabel),
                 ),
               ),
           ],

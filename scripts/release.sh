@@ -24,16 +24,16 @@ release_android() {
   step "Android release APK + AAB"
   flutter build apk --release
   flutter build appbundle --release
-  cp build/app/outputs/flutter-apk/app-release.apk "$out/CrowdMic-$version.apk"
-  cp build/app/outputs/bundle/release/app-release.aab "$out/CrowdMic-$version.aab"
-  ok "$out/CrowdMic-$version.{apk,aab}"
+  cp build/app/outputs/flutter-apk/app-release.apk "$out/CrowdSpeaker-$version.apk"
+  cp build/app/outputs/bundle/release/app-release.aab "$out/CrowdSpeaker-$version.aab"
+  ok "$out/CrowdSpeaker-$version.{apk,aab}"
 }
 
 release_ios() {
   step "iOS App Store IPA"
   flutter build ipa --release --export-options-plist=ios/export/ExportOptions-appstore.plist
-  cp build/ios/ipa/*.ipa "$out/CrowdMic-$version.ipa"
-  ok "$out/CrowdMic-$version.ipa (upload with Transporter)"
+  cp build/ios/ipa/*.ipa "$out/CrowdSpeaker-$version.ipa"
+  ok "$out/CrowdSpeaker-$version.ipa (upload with Transporter)"
 }
 
 install_ios() {

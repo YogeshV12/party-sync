@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-time setup for CrowdMic development.
+# One-time setup for Crowd Speaker development.
 #
 #   ./scripts/setup.sh            check tools, fetch packages, analyze, run Dart tests
 #   ./scripts/setup.sh --quick    check tools and fetch packages only

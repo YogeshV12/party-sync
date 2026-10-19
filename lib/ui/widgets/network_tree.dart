@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/protocol.dart';
+import '../../l10n/app_localizations.dart';
 import '../theme.dart';
 
 /// Orders nodes as a depth-first tree under [rootId]. Nodes whose parent
@@ -50,8 +51,8 @@ class NetworkTree extends StatelessWidget {
             children: [
               Icon(Icons.hourglass_empty, color: scheme.onSurfaceVariant),
               const SizedBox(width: 12),
-              const Expanded(
-                child: Text('No speakers yet. Have the squad scan your QR code to turn up!'),
+              Expanded(
+                child: Text(AppLocalizations.of(context).noSpeakersYet),
               ),
             ],
           ),
@@ -76,6 +77,7 @@ class _NodeRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     final icon = switch (node.role) {
       'host' => Icons.mic,
       'relay' => Icons.wifi_tethering,
@@ -84,22 +86,22 @@ class _NodeRow extends StatelessWidget {
           : Icons.speaker,
     };
     final details = <String>[
-      if (node.role == 'relay') 'Booster 📡 · ${node.children} synced',
+      if (node.role == 'relay') l10n.boosterDetail(node.children),
       if (node.route != null && node.route!.isNotEmpty) node.route!,
-      if (node.bufferMs != null) '${node.bufferMs!.round()} ms buffer',
+      if (node.bufferMs != null) l10n.bufferDetail(node.bufferMs!.round()),
       if (node.lossPct != null && node.lossPct! >= 0.5)
-        '${node.lossPct!.toStringAsFixed(1)}% drops',
+        l10n.dropsDetail(node.lossPct!.toStringAsFixed(1)),
     ];
     final health = node.role == 'host'
         ? null
         : healthColor(scheme, bufferHealth(node.bufferMs ?? 0));
     return Padding(
-      padding: EdgeInsets.fromLTRB(16.0 + node.depth * 20.0, 6, 16, 6),
+      padding: EdgeInsetsDirectional.fromSTEB(16.0 + node.depth * 20.0, 6, 16, 6),
       child: Row(
         children: [
           if (node.depth > 0)
             Padding(
-              padding: const EdgeInsets.only(right: 6),
+              padding: const EdgeInsetsDirectional.only(end: 6),
               child: Icon(Icons.subdirectory_arrow_right,
                   size: 16, color: scheme.outline),
             ),
@@ -120,7 +122,7 @@ class _NodeRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  node.role == 'host' ? '${node.name} (you 🎤)' : node.name,
+                  node.role == 'host' ? l10n.youLabel(node.name) : node.name,
                   style: const TextStyle(fontWeight: FontWeight.w600),
                   overflow: TextOverflow.ellipsis,
                 ),

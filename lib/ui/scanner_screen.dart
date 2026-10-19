@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../core/join_info.dart';
+import '../l10n/app_localizations.dart';
 
-/// Scans a CrowdMic app code or a standard Wi-Fi QR code.
+/// Scans a Crowd Speaker app code or a standard Wi-Fi QR code.
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
 
@@ -32,17 +33,18 @@ class _ScannerScreenState extends State<ScannerScreen> {
         return;
       }
     }
-    setState(() => _hint = "Not a CrowdMic code. Scan the QR on your friend's screen!");
+    setState(() => _hint = AppLocalizations.of(context).scannerNotACode);
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: const Text('Scan Host QR Code'),
+        title: Text(l10n.scanHostQr),
       ),
       body: Stack(
         fit: StackFit.expand,
@@ -63,7 +65,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             right: 24,
             bottom: 48,
             child: Text(
-              _hint ?? "Point your camera at the QR code on your friend's screen.",
+              _hint ?? l10n.scannerHint,
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.white, fontSize: 15),
             ),

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../app_scope.dart';
 import '../core/util.dart';
 import '../engine/session_engine.dart';
+import '../l10n/app_localizations.dart';
 import 'host_live_screen.dart';
 import 'widgets/common.dart';
 
@@ -31,7 +32,8 @@ class _HostSetupScreenState extends State<HostSetupScreen> {
     _initialized = true;
     final scope = AppScope.of(context);
     _sessionName =
-        TextEditingController(text: "${scope.engine.displayName}'s party");
+        TextEditingController(
+            text: AppLocalizations.of(context).partyNameDefault(scope.engine.displayName));
     _ssid = TextEditingController(text: scope.prefs.hotspotSsid);
     _password = TextEditingController(text: scope.prefs.hotspotPassword);
     _mode = scope.engine.caps.canCreateNetwork
@@ -51,31 +53,33 @@ class _HostSetupScreenState extends State<HostSetupScreen> {
   Future<void> _openHotspotSettings() async {
     final opened = await AppScope.of(context).engine.net.openHotspotSettings();
     if (!opened && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Open Settings → Personal Hotspot and turn on '
-            '"Allow Others to Join".'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(AppLocalizations.of(context).hotspotSettingsHint),
       ));
     }
   }
 
   void _goLive() {
     final scope = AppScope.of(context);
+    final l10n = AppLocalizations.of(context);
     final hotspot = _mode == HostNetworkMode.phoneHotspot;
     if (hotspot && _ssid.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Enter your hotspot name so friends can join.')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.enterHotspotName)));
       return;
     }
     if (hotspot && !isValidWifiPassword(_password.text)) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Wi-Fi passwords must be 8–63 characters. Check your hotspot settings and try again!')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.invalidWifiPassword)));
       return;
     }
     scope.prefs
       ..hotspotSsid = _ssid.text.trim()
       ..hotspotPassword = _password.text
       ..voiceProcessing = _voiceProcessing;
-    final name = _sessionName.text.trim().isEmpty ? 'Party' : _sessionName.text.trim();
+    final name = _sessionName.text.trim().isEmpty
+        ? l10n.defaultPartyName
+        : _sessionName.text.trim();
     unawaited(scope.engine.startHost(
       name: name,
       mode: _mode,
@@ -90,9 +94,10 @@ class _HostSetupScreenState extends State<HostSetupScreen> {
   @override
   Widget build(BuildContext context) {
     final caps = AppScope.of(context).engine.caps;
+    final l10n = AppLocalizations.of(context);
     final hotspot = _mode == HostNetworkMode.phoneHotspot;
     return Scaffold(
-      appBar: AppBar(title: const Text('Host the Party 🎤')),
+      appBar: AppBar(title: Text(l10n.hostSetupTitle)),
       body: SafeArea(
         child: ListView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -101,19 +106,19 @@ class _HostSetupScreenState extends State<HostSetupScreen> {
             TextField(
               controller: _sessionName,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Party name',
-                helperText: 'What friends will see when they join',
-                prefixIcon: Icon(Icons.celebration_outlined),
+              decoration: InputDecoration(
+                labelText: l10n.partyNameLabel,
+                helperText: l10n.partyNameHelper,
+                prefixIcon: const Icon(Icons.celebration_outlined),
               ),
             ),
-            const SectionTitle('How should friends connect?'),
+            SectionTitle(l10n.connectQuestion),
             if (caps.canCreateNetwork) ...[
               OptionCard(
                 icon: Icons.wifi_tethering,
-                title: 'Instant Party Network',
-                badge: 'Easiest',
-                subtitle: 'Zero setup needed. Creates an instant local bubble for everyone to tap in. (No internet needed).',
+                title: l10n.instantNetworkTitle,
+                badge: l10n.badgeEasiest,
+                subtitle: l10n.instantNetworkSubtitle,
                 selected: _mode == HostNetworkMode.appNetwork,
                 onTap: () => setState(() => _mode = HostNetworkMode.appNetwork),
               ),
@@ -121,19 +126,15 @@ class _HostSetupScreenState extends State<HostSetupScreen> {
             ],
             OptionCard(
               icon: Icons.router_outlined,
-              title: caps.isIOS ? 'Use Personal Hotspot' : 'Use my phone hotspot',
-              subtitle: "Turn on your phone's hotspot manually. Also lets friends share your mobile internet.",
+              title: caps.isIOS ? l10n.usePersonalHotspot : l10n.useMyHotspot,
+              subtitle: l10n.hotspotSubtitle,
               selected: hotspot,
               onTap: () => setState(() => _mode = HostNetworkMode.phoneHotspot),
             ),
             if (hotspot) ...[
               const SizedBox(height: 14),
               InfoBanner(
-                caps.isIOS
-                    ? 'Turn on Personal Hotspot in Settings ("Allow Others to Join"), '
-                        'then enter your iPhone name & hotspot password below so friends can join.'
-                    : 'Turn on your hotspot in Settings, then enter your Wi-Fi name and '
-                        'password below so friends can join.',
+                caps.isIOS ? l10n.hotspotInfoIos : l10n.hotspotInfoAndroid,
                 icon: Icons.lightbulb_outline,
               ),
               const SizedBox(height: 10),
@@ -141,14 +142,14 @@ class _HostSetupScreenState extends State<HostSetupScreen> {
                 OutlinedButton.icon(
                   onPressed: _openHotspotSettings,
                   icon: const Icon(Icons.settings),
-                  label: const Text('Open hotspot settings'),
+                  label: Text(l10n.openHotspotSettings),
                 ),
               const SizedBox(height: 12),
               TextField(
                 controller: _ssid,
-                decoration: const InputDecoration(
-                  labelText: 'Hotspot Wi-Fi name',
-                  prefixIcon: Icon(Icons.wifi),
+                decoration: InputDecoration(
+                  labelText: l10n.hotspotWifiNameLabel,
+                  prefixIcon: const Icon(Icons.wifi),
                 ),
               ),
               const SizedBox(height: 10),
@@ -156,7 +157,7 @@ class _HostSetupScreenState extends State<HostSetupScreen> {
                 controller: _password,
                 obscureText: !_showPassword,
                 decoration: InputDecoration(
-                  labelText: 'Hotspot password',
+                  labelText: l10n.hotspotPasswordLabel,
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     icon: Icon(_showPassword ? Icons.visibility_off : Icons.visibility),
@@ -165,14 +166,13 @@ class _HostSetupScreenState extends State<HostSetupScreen> {
                 ),
               ),
             ],
-            const SectionTitle('Audio Tuning'),
+            SectionTitle(l10n.audioTuning),
             Card(
               child: SwitchListTile(
                 value: _voiceProcessing,
                 onChanged: (v) => setState(() => _voiceProcessing = v),
-                title: const Text('Filter background noise'),
-                subtitle: const Text(
-                    "Keeps voices crisp. Toggle off if you are blasting music or using DJ gear."),
+                title: Text(l10n.filterNoiseTitle),
+                subtitle: Text(l10n.filterNoiseSubtitle),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               ),
             ),
@@ -180,7 +180,7 @@ class _HostSetupScreenState extends State<HostSetupScreen> {
             FilledButton.icon(
               onPressed: _goLive,
               icon: const Icon(Icons.podcasts),
-              label: const Text('Start the Party 🔥'),
+              label: Text(l10n.startParty),
             ),
           ],
         ),
