@@ -26,7 +26,7 @@ class KeepAliveService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val microphone = intent?.getBooleanExtra(EXTRA_MIC, false) ?: false
-        val text = intent?.getStringExtra(EXTRA_TEXT) ?: "CrowdMic is running"
+        val text = intent?.getStringExtra(EXTRA_TEXT) ?: "Crowd Speaker is running"
         val notification = buildNotification(text)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             var type = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
@@ -79,7 +79,7 @@ class KeepAliveService : Service() {
         )
         return Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_party_sync)
-            .setContentTitle("CrowdMic")
+            .setContentTitle("Crowd Speaker")
             .setContentText(text)
             .setContentIntent(open)
             .setOngoing(true)

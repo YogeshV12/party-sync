@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build CrowdMic.
+# Build Crowd Speaker.
 #
 #   ./scripts/build.sh android           debug APK  → build/app/outputs/flutter-apk/app-debug.apk
 #   ./scripts/build.sh android release   release APK (signed with the debug key until you add your own)

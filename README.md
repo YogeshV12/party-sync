@@ -1,4 +1,4 @@
-# CrowdMic
+# Crowd Speaker
 
 One phone is the mic. Every other phone, and the Bluetooth speaker connected to
 it, plays the host's voice in sync. Phones that can't reach the host directly

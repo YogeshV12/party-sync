@@ -1,4 +1,4 @@
-# Contributing to CrowdMic
+# Contributing to Crowd Speaker
 
 ## Get running in 5 minutes
 
