@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/join_info.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Shows how to join a host or relay: an app QR (joins Wi-Fi and finds the
 /// session), or a plain Wi-Fi QR the phone's camera understands.
@@ -23,6 +24,7 @@ class _QrPanelState extends State<QrPanel> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     final join = widget.join;
     final data = _wifiCode ? join.toWifiQr() : join.toUri();
     return Card(
@@ -37,18 +39,24 @@ class _QrPanelState extends State<QrPanel> {
                     ?.copyWith(fontWeight: FontWeight.w600)),
             const SizedBox(height: 12),
             SegmentedButton<bool>(
-              segments: const [
-                ButtonSegment(value: false, label: Text('Party code'), icon: Icon(Icons.qr_code_2)),
-                ButtonSegment(value: true, label: Text('Camera QR'), icon: Icon(Icons.camera_alt_outlined)),
+              segments: [
+                ButtonSegment(
+                    value: false,
+                    label: Text(l10n.partyCode),
+                    icon: const Icon(Icons.qr_code_2)),
+                ButtonSegment(
+                    value: true,
+                    label: Text(l10n.cameraQr),
+                    icon: const Icon(Icons.camera_alt_outlined)),
               ],
               selected: {_wifiCode},
               onSelectionChanged: (s) => setState(() => _wifiCode = s.first),
             ),
             const SizedBox(height: 16),
             if (join.ssid.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(24),
-                child: Text('Setting up party network…'),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(l10n.settingUpNetwork),
               )
             else
               Container(
@@ -70,28 +78,24 @@ class _QrPanelState extends State<QrPanel> {
               ),
             const SizedBox(height: 12),
             Text(
-              _wifiCode
-                  ? "Scan with your phone's Camera app to join the Wi-Fi first, then open "
-                      'CrowdMic and tap "I\'m already on the same Wi-Fi".'
-                  : 'Scan with CrowdMic → "Join the Sound". Connects to Wi-Fi '
-                      'and syncs the sound automatically in one tap!',
+              _wifiCode ? l10n.qrCameraHelp : l10n.qrAppHelp,
               textAlign: TextAlign.center,
               style: TextStyle(color: scheme.onSurfaceVariant, height: 1.35),
             ),
             const SizedBox(height: 8),
-            _DetailRow(label: 'Wi-Fi', value: join.ssid),
+            _DetailRow(label: l10n.labelWifi, value: join.ssid),
             _DetailRow(
-              label: 'Password',
+              label: l10n.labelPassword,
               value: _showPassword ? join.password : '•' * join.password.length.clamp(0, 12),
               copyValue: join.password,
               trailing: IconButton(
-                tooltip: _showPassword ? 'Hide' : 'Show',
+                tooltip: _showPassword ? l10n.hide : l10n.show,
                 icon: Icon(_showPassword ? Icons.visibility_off : Icons.visibility),
                 onPressed: () => setState(() => _showPassword = !_showPassword),
               ),
             ),
             if (join.hosts.isNotEmpty)
-              _DetailRow(label: 'Address', value: join.hosts.first),
+              _DetailRow(label: l10n.labelAddress, value: join.hosts.first),
           ],
         ),
       ),
@@ -122,12 +126,13 @@ class _DetailRow extends StatelessWidget {
         ),
         ?trailing,
         IconButton(
-          tooltip: 'Copy',
+          tooltip: AppLocalizations.of(context).copy,
           icon: const Icon(Icons.copy, size: 18),
           onPressed: () {
             Clipboard.setData(ClipboardData(text: copyValue ?? value));
             ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text('$label copied')));
+                .showSnackBar(SnackBar(
+                    content: Text(AppLocalizations.of(context).copied(label))));
           },
         ),
       ],

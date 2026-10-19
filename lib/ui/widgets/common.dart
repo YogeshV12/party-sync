@@ -1,20 +1,37 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
+/// Languages whose scripts have no letter case, or join letters so that
+/// tracking would break them apart (Arabic, Indic). Shown as written.
+const _uncasedLanguages = {
+  'ar', 'ur', 'hi', 'bn', 'ta', 'te', 'mr', 'th', 'zh', 'ja', 'ko', //
+};
+
 class SectionTitle extends StatelessWidget {
   const SectionTitle(this.text, {super.key});
   final String text;
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(4, 20, 4, 10),
-        child: Text(
-          text.toUpperCase(),
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                letterSpacing: 1.2,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-        ),
-      );
+  Widget build(BuildContext context) {
+    final language = Localizations.localeOf(context).languageCode;
+    final cased = !_uncasedLanguages.contains(language);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 20, 4, 10),
+      child: Text(
+        cased ? _upper(text, language) : text,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              letterSpacing: cased ? 1.2 : 0,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+      ),
+    );
+  }
+
+  // Dart's toUpperCase isn't locale-aware: Turkish i/ı need their own pairs.
+  static String _upper(String text, String language) => language == 'tr'
+      ? text.replaceAll('i', 'İ').replaceAll('ı', 'I').toUpperCase()
+      : text.toUpperCase();
 }
 
 /// A tappable, selectable card used instead of radio buttons.
@@ -191,6 +208,7 @@ class ErrorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -203,9 +221,9 @@ class ErrorView extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 24),
-            FilledButton(onPressed: onRetry, child: const Text('Try again')),
+            FilledButton(onPressed: onRetry, child: Text(l10n.tryAgain)),
             const SizedBox(height: 10),
-            OutlinedButton(onPressed: onBack, child: const Text('Back')),
+            OutlinedButton(onPressed: onBack, child: Text(l10n.back)),
           ],
         ),
       ),
@@ -255,7 +273,7 @@ Future<bool> confirm(
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel')),
+            child: Text(AppLocalizations.of(context).cancel)),
         FilledButton(
             onPressed: () => Navigator.pop(context, true), child: Text(action)),
       ],

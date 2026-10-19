@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app_scope.dart';
 import '../engine/session_engine.dart';
+import '../l10n/app_localizations.dart';
 import 'host_setup_screen.dart';
 import 'widgets/common.dart';
 import 'widgets/network_tree.dart';
@@ -12,11 +13,12 @@ class HostLiveScreen extends StatelessWidget {
 
   Future<void> _end(BuildContext context) async {
     final engine = AppScope.of(context).engine;
+    final l10n = AppLocalizations.of(context);
     final ok = engine.phase != SessionPhase.live ||
         await confirm(context,
-            title: 'End the party?',
-            message: 'This will disconnect all speakers and stop the sound.',
-            action: 'End Party');
+            title: l10n.endPartyTitle,
+            message: l10n.endPartyMessage,
+            action: l10n.endParty);
     if (!ok || !context.mounted) return;
     await engine.stop();
     if (context.mounted) Navigator.pop(context);
@@ -26,6 +28,7 @@ class HostLiveScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final scope = AppScope.of(context);
     final engine = scope.engine;
+    final l10n = AppLocalizations.of(context);
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -35,12 +38,12 @@ class HostLiveScreen extends StatelessWidget {
         listenable: engine,
         builder: (context, _) => Scaffold(
           appBar: AppBar(
-            title: Text(engine.sessionName.isEmpty ? 'On the Mic 🎤' : engine.sessionName),
+            title: Text(engine.sessionName.isEmpty ? l10n.onTheMic : engine.sessionName),
             actions: [
               TextButton.icon(
                 onPressed: () => _end(context),
                 icon: const Icon(Icons.stop_circle_outlined),
-                label: const Text('End Party'),
+                label: Text(l10n.endParty),
               ),
             ],
           ),
@@ -52,10 +55,11 @@ class HostLiveScreen extends StatelessWidget {
 
   Widget _body(BuildContext context, AppScope scope) {
     final engine = scope.engine;
+    final l10n = AppLocalizations.of(context);
     switch (engine.phase) {
       case SessionPhase.error:
         return ErrorView(
-          message: engine.error ?? 'Something went wrong.',
+          message: engine.error ?? l10n.somethingWentWrong,
           onRetry: () {
             engine.stop();
             Navigator.pushReplacement(context,
@@ -70,9 +74,9 @@ class HostLiveScreen extends StatelessWidget {
         break;
       default:
         return BusyView(
-          title: 'Firing up the party…',
+          title: l10n.firingUpParty,
           subtitle: engine.hostMode == HostNetworkMode.appNetwork
-              ? 'Creating your party network'
+              ? l10n.creatingPartyNetwork
               : null,
         );
     }
@@ -86,11 +90,10 @@ class HostLiveScreen extends StatelessWidget {
           InfoBanner(engine.notice!, warning: true, icon: Icons.wifi_off),
         ],
         const SizedBox(height: 16),
-        if (join != null) QrPanel(join: join, title: 'Scan to join the sound 📲'),
-        const SectionTitle('Sound sync buffer'),
+        if (join != null) QrPanel(join: join, title: l10n.scanToJoinSound),
+        SectionTitle(l10n.syncBufferTitle),
         _SyncDelayCard(engine: engine, scope: scope),
-        SectionTitle('Squad speakers · ${engine.listenerCount} '
-            '${engine.listenerCount == 1 ? 'phone' : 'phones'} connected'),
+        SectionTitle(l10n.squadSpeakers(engine.listenerCount)),
         NetworkTree(nodes: engine.nodes, rootId: engine.nodeId),
       ],
     );
@@ -104,6 +107,7 @@ class _MicCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     final muted = engine.muted;
     return Card(
       child: Padding(
@@ -142,7 +146,7 @@ class _MicCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 22),
-            Text(muted ? 'Mic Muted 🤫' : 'Live on Air 🎙️',
+            Text(muted ? l10n.micMuted : l10n.liveOnAir,
                 style: Theme.of(context)
                     .textTheme
                     .headlineSmall
@@ -150,11 +154,10 @@ class _MicCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               muted
-                  ? 'Tap the mic to unmute and drop back in'
+                  ? l10n.tapToUnmute
                   : engine.listenerCount == 0
-                      ? 'Waiting for the squad to scan and join…'
-                      : 'Streaming live to ${engine.listenerCount} '
-                          '${engine.listenerCount == 1 ? 'phone speaker' : 'phone speakers'}',
+                      ? l10n.waitingForSquad
+                      : l10n.streamingTo(engine.listenerCount),
               style: TextStyle(color: scheme.onSurfaceVariant),
             ),
           ],
@@ -172,6 +175,7 @@ class _SyncDelayCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
@@ -180,9 +184,9 @@ class _SyncDelayCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Expanded(
-                  child: Text('Buffer delay before sound plays',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
+                Expanded(
+                  child: Text(l10n.bufferDelayLabel,
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 Text('${engine.syncDelayMs} ms',
                     style: TextStyle(
@@ -199,8 +203,7 @@ class _SyncDelayCard extends StatelessWidget {
               onChangeEnd: (v) => scope.prefs.syncDelayMs = v.round(),
             ),
             Text(
-              'Slide up if audio stutters or drops out. Bluetooth speakers and '
-              'signal boosters need a bit more buffer time to stay perfectly in sync.',
+              l10n.syncBufferHelp,
               style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13, height: 1.35),
             ),
           ],

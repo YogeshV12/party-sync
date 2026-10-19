@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app_scope.dart';
+import '../l10n/app_localizations.dart';
 import 'host_setup_screen.dart';
 import 'join_screen.dart';
 import 'widgets/common.dart';
@@ -41,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final scope = AppScope.of(context);
     final caps = scope.engine.caps;
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: SafeArea(
         child: ListView(
@@ -63,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Icon(Icons.graphic_eq, color: scheme.onPrimary, size: 30),
                 ),
                 const SizedBox(width: 14),
-                Text('CrowdMic',
+                Text('Crowd Speaker',
                     style: Theme.of(context)
                         .textTheme
                         .headlineMedium
@@ -72,9 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 14),
             Text(
-              "Turn your squad's phones into one massive sound system. 🔊 "
-              'One phone grabs the mic, and every phone (plus any Bluetooth '
-              'speaker hooked up) pumps the sound in sync.',
+              l10n.homeTagline,
               style: Theme.of(context)
                   .textTheme
                   .bodyLarge
@@ -84,18 +84,18 @@ class _HomeScreenState extends State<HomeScreen> {
             TextField(
               controller: _name,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(
-                labelText: 'Your name or nickname',
-                helperText: 'What the squad sees on their screen',
-                prefixIcon: Icon(Icons.person_outline),
+              decoration: InputDecoration(
+                labelText: l10n.nameLabel,
+                helperText: l10n.nameHelper,
+                prefixIcon: const Icon(Icons.person_outline),
               ),
               onChanged: _saveName,
             ),
-            const SectionTitle("What's the vibe?"),
+            SectionTitle(l10n.homeVibeTitle),
             _RoleCard(
               icon: Icons.mic,
-              title: 'Grab the Mic 🎤',
-              subtitle: "Host the party. Whatever you say or stream plays in real-time through everyone's speakers.",
+              title: l10n.hostCardTitle,
+              subtitle: l10n.hostCardSubtitle,
               primary: true,
               onTap: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const HostSetupScreen())),
@@ -103,18 +103,18 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 12),
             _RoleCard(
               icon: Icons.speaker_group,
-              title: 'Join the Sound 🔊',
-              subtitle: "Scan the host's QR code. Turn this phone or your Bluetooth speaker into part of the party.",
+              title: l10n.joinCardTitle,
+              subtitle: l10n.joinCardSubtitle,
               onTap: () => Navigator.push(
                   context, MaterialPageRoute(builder: (_) => const JoinScreen())),
             ),
             const SizedBox(height: 20),
             InfoBanner(
               caps.canRelay
-                  ? 'Pro tip: This phone can boost range! Once you are connected, you can share the vibe with even more friends nearby.'
+                  ? l10n.homeTipRelay
                   : caps.isIOS
-                      ? 'iPhones can host or join as speakers. To boost signal range for friends further away, use an Android phone.'
-                      : 'Ready to host the party or join the sound!',
+                      ? l10n.homeTipIos
+                      : l10n.homeTipDefault,
               icon: Icons.hub_outlined,
             ),
           ],

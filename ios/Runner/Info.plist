@@ -7,15 +7,43 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>CrowdMic</string>
+	<string>Crowd Speaker</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>es</string>
+		<string>fr</string>
+		<string>de</string>
+		<string>pt</string>
+		<string>it</string>
+		<string>hi</string>
+		<string>ar</string>
+		<string>zh-Hans</string>
+		<string>ja</string>
+		<string>ko</string>
+		<string>ru</string>
+		<string>tr</string>
+		<string>id</string>
+		<string>vi</string>
+		<string>th</string>
+		<string>pl</string>
+		<string>nl</string>
+		<string>uk</string>
+		<string>bn</string>
+		<string>ta</string>
+		<string>te</string>
+		<string>ur</string>
+		<string>sv</string>
+		<string>mr</string>
+	</array>
 	<key>CFBundleName</key>
-	<string>CrowdMic</string>
+	<string>Crowd Speaker</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -29,11 +57,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>CrowdMic uses the camera to scan the host’s QR code.</string>
+	<string>Crowd Speaker uses the camera to scan the host’s QR code.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>CrowdMic talks to the other phones on this Wi-Fi to send and receive the host’s voice.</string>
+	<string>Crowd Speaker talks to the other phones on this Wi-Fi to send and receive the host’s voice.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>CrowdMic uses the microphone when you are the mic, so your voice plays on everyone’s speakers.</string>
+	<string>Crowd Speaker uses the microphone when you are the mic, so your voice plays on everyone’s speakers.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
